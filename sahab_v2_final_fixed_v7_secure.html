@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>شركة سحاب للتطوير العقارى</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        :root { --sahab-red: #8b1a1a; --border: #e2e8f0; --sahab-green: #2ecc71; --gold: #ffd700; --blue: #3498db; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        
+        body { 
+            margin: 0; padding: 10px; background: #f4f7f6; 
+            height: 100vh; width: 100vw; overflow: hidden;
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            grid-template-rows: 1fr 100px;
+            gap: 10px;
+            direction: ltr;
+        }
+
+        /* شاشة تسجيل الدخول */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #f4f7f6; z-index: 9999; display: flex; align-items: center; justify-content: center;
+            direction: rtl;
+        }
+        .login-box {
+            background: white; padding: 40px; border-radius: 25px; border-top: 10px solid var(--sahab-red);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); width: 400px; text-align: center;
+        }
+        .login-input {
+            width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px;
+            font-size: 16px; text-align: center; outline: none;
+        }
+        .login-btn {
+            width: 100%; padding: 12px; background: var(--sahab-red); color: white; border: none;
+            border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px;
+        }
+
+        /* قطاع 1: المحتوى الرئيسي (يسار) */
+        #sector-1 {
+            grid-column: 1; grid-row: 1;
+            background: #fff; border-radius: 20px; border: 1px solid #ddd;
+            display: flex; flex-direction: column; overflow: hidden;
+            direction: rtl;
+        }
+
+        /* قطاع 2: لوحة التحكم الجانبية (يمين) */
+        #sector-2 {
+            grid-column: 2; grid-row: 1;
+            background: #fff; border-radius: 20px; border-right: 12px solid var(--sahab-red);
+            padding: 15px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto;
+            direction: rtl;
+        }
+
+        /* قطاع 3: الهيكل والمالية (أسفل يمين) */
+        #sector-3 {
+            grid-column: 2; grid-row: 2;
+            background: #fff; border-radius: 20px; border-right: 12px solid var(--gold);
+            padding: 10px; display: flex; flex-direction: column; gap: 5px;
+            direction: rtl;
+        }
+
+        /* قطاع 4: أزرار التحكم (أسفل يسار) */
+        #sector-4 {
+            grid-column: 1; grid-row: 2;
+            background: #fff; border-radius: 20px; border-bottom: 8px solid var(--sahab-red);
+            display: flex; align-items: center; justify-content: space-evenly; padding: 0 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            direction: rtl;
+        }
+
+        .cmd-btn { 
+            width: 100%; padding: 14px; margin-bottom: 10px; 
+            border: 2px solid var(--border); border-right: 8px solid var(--sahab-red); 
+            border-radius: 12px; background: white; text-align: right; 
+            cursor: pointer; font-weight: 900; font-size: 14px;
+        }
+        .action-btn-main {
+            flex: 1; margin: 0 5px; height: 50px; font-weight: 900; 
+            cursor: pointer; background: white; border: 1px solid #ddd; 
+            border-radius: 10px; transition: 0.2s;
+        }
+        .action-btn-main:hover:not(:disabled) { background: #f9f9f9; border-color: var(--sahab-red); }
+        .action-btn-main:disabled { opacity: 0.5; cursor: not-allowed; background: #eee; }
+
+        .installment-card { background: white; border-radius: 15px; padding: 15px; border: 1px solid var(--border); margin-bottom: 10px; }
+        .field-label { color: var(--sahab-red); margin-bottom: 3px; display: block; font-size: 13px; font-weight: 900; }
+        .installment-input { width: 100%; padding: 8px; border: 1px solid var(--sahab-red); border-radius: 8px; font-weight: 900; text-align: center; font-size: 14px; }
+        .res-table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; }
+        .res-table th { background: var(--sahab-red); color: white; padding: 8px; border: 1px solid #ddd; font-size: 12px; }
+        .res-table td { padding: 6px; border: 1px solid #ddd; text-align: center; font-weight: bold; font-size: 11px; }
+
+        .card-item { 
+            background: #fff; border: 2px solid #eee; border-right: 10px solid var(--sahab-red); 
+            padding: 15px; border-radius: 15px; cursor: pointer; transition: 0.2s; 
+        }
+        .card-item.selected { border-color: var(--gold); background: #fffdf0; }
+
+        .unit-box {
+            width: 80px; height: 80px; color: white; border-radius: 12px; 
+            cursor: pointer; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; font-weight: bold;
+        }
+        .unit-box.selected { border: 3px solid var(--gold); transform: scale(1.05); }
+
+        .dashboard-card {
+            background: #fff; border: 1px solid #ddd; border-radius: 15px; padding: 15px; text-align: center;
+            border-top: 5px solid var(--sahab-red); cursor: pointer; transition: 0.3s;
+        }
+        .dashboard-card .value { font-size: 20px; font-weight: 900; color: var(--sahab-red); }
+        .dashboard-card .label { font-size: 11px; font-weight: bold; color: #666; margin-top: 5px; }
+
+        .tree-item { margin-right: 20px; border-right: 2px solid #eee; padding-right: 10px; margin-top: 5px; }
+        .tree-header { cursor: pointer; font-weight: bold; color: var(--sahab-red); display: flex; align-items: center; gap: 5px; }
+        .tree-content { display: none; margin-top: 5px; }
+        .tree-content.active { display: block; }
+
+        @media print { .no-print { display: none !important; } body { display: block; } }
+        .card-item-row.selected { background: #fff5f5 !important; border-right: 4px solid var(--sahab-red); }
+    </style>
+</head>
+<body>
+
+    <!-- شاشة تسجيل الدخول -->
+    <div id="login-screen">
+        <div class="login-box">
+            <img src="https://i.postimg.cc/xqSdpmBX/lqtt-shasht-2026-02-12-035734.png" alt="Logo" style="width:120px; margin-bottom:20px;">
+            <h2 style="color:var(--sahab-red); margin-bottom:20px;">تسجيل الدخول</h2>
+            <select id="user-type" class="login-input">
+                <option value="admin">المسؤول (Admin)</option>
+                <option value="viewer">المشاهد (Viewer)</option>
+            </select>
+            <input type="password" id="login-pass" class="login-input" placeholder="كلمة السر">
+            <button class="login-btn" onclick="login()">دخول</button>
+            <p id="login-error" style="color:red; font-size:12px; margin-top:10px; display:none;">كلمة السر غير صحيحة!</p>
+        </div>
+    </div>
+
+    <!-- قطاع 1: المحتوى (يسار) -->
+    <div id="sector-1">
+        <div class="no-print" style="padding: 15px; border-bottom: 2px solid #e74c3c; display: flex; align-items: center; justify-content: space-between; background: #fff;">
+            <div style="font-weight: 900; color: #333; font-size: 18px;">
+                <i class="fas fa-chevron-left" style="color: #e74c3c; margin-left: 10px; cursor:pointer;" onclick="goBack()"></i>
+                <span id="current-command-text">لوحة التحكم</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; direction: ltr;">
+                <div style="text-align: right;">
+                    <div style="font-weight: 900; color: #e74c3c; font-size: 18px; line-height: 1;">سحاب </div>
+                    <div style="font-size: 9px; color: #666; font-weight: bold;">SAHAB ESTATE</div>
+                </div>
+                <div style="width:60px; height:60px; background: #fff; border-radius:10px; display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px solid #eee;">
+                    <img src="https://i.postimg.cc/xqSdpmBX/lqtt-shasht-2026-02-12-035734.png" alt="Logo" style="width:100%; height:100%; object-fit:contain;">
+                </div>
+            </div>
+        </div>
+        <div id="main-content" style="flex: 1; padding:20px; background: #fafafa; overflow-y: auto;"></div>
+    </div>
+
+    <!-- قطاع 4: الأزرار (أسفل يسار) -->
+    <div id="sector-4" class="no-print">
+        <button class="action-btn-main" id="btn-add" onclick="executeAction('إضافة')">إضافة</button>
+        <button class="action-btn-main" id="btn-edit" onclick="executeAction('تعديل')">تعديل</button>
+        <button class="action-btn-main" id="btn-delete" style="color:#e74c3c;" onclick="executeAction('حذف')">حذف</button>
+        <button class="action-btn-main" style="color:#3498db;" onclick="window.print()">طباعة</button>
+        <button class="action-btn-main" style="color:#666;" onclick="goBack()">رجوع</button>
+        <button onclick="showNotifications()" style="width:60px; height:50px; color:#e74c3c; background:white; border:1px solid #ddd; border-radius:10px; position:relative;">
+            <i class="fas fa-bell"></i>
+            <span id="notif-count" style="background:red; color:white; border-radius:50%; padding:2px 6px; font-size:9px; position:absolute; top:5px; right:5px; display:none;">0</span>
+        </button>
+    </div>
+
+    <!-- قطاع 2: لوحة التحكم (يمين) -->
+    <div id="sector-2" class="no-print">
+        <div style="font-weight: 900; color: #e74c3c; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 5px;">لوحة التحكم والتحصيل</div>
+        <div style="background: #fff; border: 3px solid #e74c3c; border-radius: 12px; padding: 10px; text-align: center;">
+            <div id="clock" style="font-size: 28px; font-weight: 900; color: #e74c3c;">00:00:00</div>
+            <div id="date" style="font-size: 12px; font-weight: 900; color: #555;">--/--/----</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 5px; flex: 1; margin-top: 10px;">
+            <button class="cmd-btn" onclick="renderDashboard()">لوحة التحكم</button>
+            <button class="cmd-btn" onclick="executeAction('سجل العملاء')">سجل العملاء</button>
+            <button class="cmd-btn" id="btn-collect" onclick="executeAction('تحصيل قسط')" style="border-right-color: var(--sahab-green);">تحصيل قسط</button>
+            <button class="cmd-btn" onclick="executeAction('أقساط الشهر الحالى')">اقساط الشهر الحالى</button>
+            <button class="cmd-btn" onclick="executeAction('أقساط متأخرة')">اقساط متاخرة</button>
+            <div style="display: flex; gap: 5px;">
+                <button class="cmd-btn" onclick="exportBackup()" style="border-right-color: var(--blue); font-size: 11px; padding: 10px 5px;"><i class="fas fa-download"></i> تصدير نسخة</button>
+                <button class="cmd-btn" id="btn-import" onclick="document.getElementById('importFile').click()" style="border-right-color: var(--gold); font-size: 11px; padding: 10px 5px;"><i class="fas fa-upload"></i> استيراد نسخة</button>
+            </div>
+            <input type="file" id="importFile" style="display:none" onchange="handleImport(event)">
+            <button class="cmd-btn" id="btn-settings" onclick="renderSettings()" style="border-right-color: #666;"><i class="fas fa-cog"></i> الإعدادات</button>
+            <button class="cmd-btn" onclick="logout()" style="border-right-color: #000; background: #f9f9f9;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</button>
+        </div>
+    </div>
+
+    <!-- قطاع 3: الهيكل والمالية (أسفل يمين) -->
+    <div id="sector-3" class="no-print">
+        <div style="font-weight: 900; font-size: 14px; text-align: center;">الهيكل والمالية</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+            <button onclick="renderRegions()" style="font-size: 11px; padding: 10px 0; cursor:pointer; font-weight:bold; background:#fff; border:1px solid #ddd; border-radius:5px;">مناطق الشركة</button>
+            <button id="btn-add-cust" onclick="executeAction('إضافة عميل')" style="font-size: 11px; padding: 10px 0; cursor:pointer; font-weight:bold; background:#fff; border:1px solid #ddd; border-radius:5px;">اضافة عميل</button>
+            <button onclick="executeAction('المصاريف')" style="font-size: 11px; padding: 10px 0; cursor:pointer; font-weight:bold; background:#fff; border:1px solid #ddd; border-radius:5px;">المصاريف</button>
+            <button onclick="executeAction('الخزينة')" style="font-size: 11px; padding: 10px 0; cursor:pointer; font-weight:bold; background:#fff; border:1px solid #ddd; border-radius:5px;">الخزينة</button>
+        </div>
+    </div>
+
+    <script>
+        // --- نظام الحماية ---
+        let currentUser = null;
+        let passwords = JSON.parse(localStorage.getItem('sahab_passwords')) || { admin: '123', viewer: '456' };
+
+        function login() {
+            const type = document.getElementById('user-type').value;
+            const pass = document.getElementById('login-pass').value;
+            if (pass === passwords[type]) {
+                currentUser = type;
+                document.getElementById('login-screen').style.display = 'none';
+                applyPermissions();
+                renderDashboard();
+            } else {
+                document.getElementById('login-error').style.display = 'block';
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('login-pass').value = '';
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('login-error').style.display = 'none';
+        }
+
+        function applyPermissions() {
+            const isAdmin = currentUser === 'admin';
+            const buttons = ['btn-add', 'btn-edit', 'btn-delete', 'btn-collect', 'btn-import', 'btn-settings', 'btn-add-cust'];
+            buttons.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    btn.disabled = !isAdmin;
+                    if (!isAdmin) btn.title = "لا تمتلك صلاحية لهذا الإجراء";
+                }
+            });
+        }
+
+        // --- البيانات الأساسية ---
+        let appData = {
+            regions: JSON.parse(localStorage.getItem('sahab_regions')) || [],
+            customers: JSON.parse(localStorage.getItem('sahab_customers')) || [],
+            expenses: JSON.parse(localStorage.getItem('sahab_expenses')) || [],
+            selected: { type: null, id: null, rid: null, bid: null, ucode: null, index: null },
+            currentView: 'dashboard'
+        };
+
+        function generateSahabUnits(customUnits = null) {
+            if (customUnits) return JSON.parse(JSON.stringify(customUnits));
+            let units = [];
+            for(let i=1; i<=12; i++) {
+                units.push({ code: 'U' + i, status: 'available', type: i <= 2 ? 'تجاري' : 'سكني' });
+            }
+            return units;
+        }
+
+        function saveData() {
+            localStorage.setItem('sahab_regions', JSON.stringify(appData.regions));
+            localStorage.setItem('sahab_customers', JSON.stringify(appData.customers));
+            localStorage.setItem('sahab_expenses', JSON.stringify(appData.expenses));
+            checkNotifications();
+        }
+
+        // --- الإعدادات ---
+        function renderSettings() {
+            if (currentUser !== 'admin') return alert("صلاحية المسؤول فقط");
+            appData.currentView = 'settings';
+            document.getElementById('current-command-text').innerText = "إعدادات النظام";
+            let html = `
+                <div class="installment-card">
+                    <h3 style="color:var(--sahab-red);">تغيير كلمات السر</h3>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                        <div>
+                            <span class="field-label">كلمة سر المسؤول (Admin)</span>
+                            <input type="text" id="new-admin-pass" class="installment-input" value="${passwords.admin}">
+                        </div>
+                        <div>
+                            <span class="field-label">كلمة سر المشاهد (Viewer)</span>
+                            <input type="text" id="new-viewer-pass" class="installment-input" value="${passwords.viewer}">
+                        </div>
+                    </div>
+                    <button onclick="updatePasswords()" style="width:100%; padding:12px; background:var(--sahab-green); color:white; border:none; border-radius:10px; font-weight:900; cursor:pointer; margin-top:20px;">حفظ كلمات السر الجديدة</button>
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function updatePasswords() {
+            const adminP = document.getElementById('new-admin-pass').value;
+            const viewerP = document.getElementById('new-viewer-pass').value;
+            if (!adminP || !viewerP) return alert("يرجى إدخال كلمات السر");
+            passwords.admin = adminP;
+            passwords.viewer = viewerP;
+            localStorage.setItem('sahab_passwords', JSON.stringify(passwords));
+            alert("تم تحديث كلمات السر بنجاح");
+        }
+
+        // --- نظام النسخ الاحتياطي ---
+        function exportBackup() {
+            const dataStr = JSON.stringify(appData);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            const exportFileDefaultName = 'sahab_backup_' + new Date().toISOString().split('T')[0] + '.json';
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+
+        function handleImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (importedData.regions && importedData.customers) {
+                        showImportOptions(importedData);
+                    } else { alert("ملف غير صالح"); }
+                } catch (err) { alert("خطأ في قراءة الملف"); }
+            };
+            reader.readAsText(file);
+        }
+
+        function showImportOptions(importedData) {
+            const choice = confirm("هل تريد 'دمج' البيانات الجديدة مع الحالية؟\n\n- اضغط OK للدمج.\n- اضغط Cancel للاستبدال.");
+            if (choice) {
+                importedData.regions.forEach(impReg => {
+                    let existingReg = appData.regions.find(r => r.name === impReg.name);
+                    if (!existingReg) { appData.regions.push(impReg); } 
+                    else {
+                        impReg.buildings.forEach(impBld => {
+                            let existingBld = existingReg.buildings.find(b => b.name === impBld.name);
+                            if (!existingBld) existingReg.buildings.push(impBld);
+                        });
+                    }
+                });
+                importedData.customers.forEach(impCust => {
+                    let exists = appData.customers.find(c => c.name === impCust.name && c.unit === impCust.unit);
+                    if (!exists) appData.customers.push(impCust);
+                });
+                saveData();
+                alert("تم دمج البيانات بنجاح");
+                location.reload();
+            } else {
+                if (confirm("تحذير: سيتم مسح كافة البيانات الحالية. هل أنت متأكد؟")) {
+                    exportBackup();
+                    appData = importedData;
+                    saveData();
+                    alert("تم استبدال البيانات بنجاح");
+                    location.reload();
+                }
+            }
+        }
+
+        // --- التفاعل واللوحات ---
+        function handleItemClick(element, type, id, rid = null, bid = null) {
+            document.querySelectorAll('.card-item, .unit-box, .card-item-row').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            appData.selected = { type, id, rid, bid, ucode: type === 'unit' ? id : null };
+            if(type === 'customer') appData.selected.index = id;
+        }
+
+        function renderDashboard() {
+            appData.currentView = 'dashboard';
+            document.getElementById('current-command-text').innerText = "لوحة تحكم شركة سحاب العقارية";
+            
+            const totalCustomers = appData.customers.length;
+            const totalExpenses = appData.expenses.reduce((sum, ex) => sum + ex.amount, 0);
+            let totalContracts = 0;
+            let totalCollected = 0;
+            let lateCount = 0;
+            let currentMonthCount = 0;
+            const today = new Date();
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
+
+            appData.customers.forEach(c => {
+                totalContracts += c.total;
+                c.installments.forEach(inst => {
+                    if(inst.status === 'paid') totalCollected += inst.a;
+                    else {
+                        const d = new Date(inst.d);
+                        if(d < today) lateCount++;
+                        if(d.getMonth() === currentMonth && d.getFullYear() === currentYear) currentMonthCount++;
+                    }
+                });
+            });
+
+            let html = `
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin-bottom:20px;">
+                    <div class="dashboard-card" onclick="renderCustomerRegistry()"><div class="value">${totalCustomers}</div><div class="label">إجمالي العملاء</div></div>
+                    <div class="dashboard-card" style="border-top-color:var(--gold);" onclick="renderExpenses()"><div class="value">${totalExpenses.toLocaleString()}</div><div class="label">إجمالي المصاريف</div></div>
+                    <div class="dashboard-card" style="border-top-color:var(--blue);" onclick="renderContractReport()"><div class="value">${totalContracts.toLocaleString()}</div><div class="label">إجمالي العقود</div></div>
+                    <div class="dashboard-card" style="border-top-color:var(--sahab-green);" onclick="renderCollectedReport()"><div class="value">${totalCollected.toLocaleString()}</div><div class="label">إجمالي المحصل</div></div>
+                    <div class="dashboard-card" style="border-top-color:#e74c3c;" onclick="executeAction('أقساط متأخرة')"><div class="value">${lateCount}</div><div class="label">أقساط متأخرة</div></div>
+                    <div class="dashboard-card" style="border-top-color:#9b59b6;" onclick="executeAction('أقساط الشهر الحالى')"><div class="value">${currentMonthCount}</div><div class="label">أقساط الشهر الحالي</div></div>
+                </div>
+                <div style="background:white; padding:20px; border-radius:15px; border:1px solid #ddd;">
+                    <h3 style="margin-top:0; color:var(--sahab-red);">تفاصيل العمليات (نظام الشجرة)</h3>
+                    ${appData.regions.map(r => `
+                        <div class="tree-item">
+                            <div class="tree-header" onclick="toggleTree(this)"><i class="fas fa-folder"></i> المنطقة: ${r.name}</div>
+                            <div class="tree-content active">
+                                ${r.buildings.map(b => `
+                                    <div class="tree-item">
+                                        <div class="tree-header" onclick="toggleTree(this)"><i class="fas fa-building"></i> عمارة: ${b.name}</div>
+                                        <div class="tree-content active">
+                                            ${b.units.map(u => {
+                                                let cust = appData.customers.find(c => c.unit === u.code && c.building === b.name);
+                                                return `<div style="padding:5px; font-size:12px; color:${u.status==='sold'?'red':'green'}; cursor:pointer;" onclick="${u.status==='sold' ? `viewCustomerDetail(${appData.customers.indexOf(cust)})` : `handleItemClick(this, 'unit', '${u.code}', ${r.id}, ${b.id})`}">
+                                                    <i class="fas fa-door-open"></i> وحدة ${u.code} - ${u.status==='sold' ? 'مباعة لـ ' + cust.name : 'متاحة'}
+                                                </div>`;
+                                            }).join('')}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function toggleTree(el) {
+            el.nextElementSibling.classList.toggle('active');
+            let icon = el.querySelector('i');
+            if(icon.classList.contains('fa-folder')) icon.classList.toggle('fa-folder-open');
+        }
+
+        function renderRegions() {
+            appData.currentView = 'regions';
+            document.getElementById('current-command-text').innerText = "مناطق الشركة";
+            let html = `<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:10px;">`;
+            appData.regions.forEach(reg => {
+                html += `<div class="card-item" onclick="handleItemClick(this, 'region', ${reg.id})" ondblclick="renderBuildings(${reg.id})">
+                            <h3 style="margin:0; color:var(--sahab-red);">${reg.name}</h3>
+                            <small>${reg.buildings.length} عمارة</small>
+                         </div>`;
+            });
+            html += `</div>`;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function renderBuildings(rid) {
+            appData.currentView = 'buildings';
+            const reg = appData.regions.find(r => r.id === rid);
+            document.getElementById('current-command-text').innerText = "عمارات " + reg.name;
+            let html = `<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:10px;">`;
+            reg.buildings.forEach(b => {
+                let soldCount = b.units.filter(u => u.status === 'sold').length;
+                html += `<div class="card-item" style="border-right-color:var(--gold);" onclick="handleItemClick(this, 'building', ${b.id}, ${rid})" ondblclick="viewUnits(${rid}, ${b.id})">
+                            <h3 style="margin:0; font-size:15px;">عمارة ${b.name}</h3>
+                            <small>${b.units.length - soldCount} وحدة متاحة</small>
+                         </div>`;
+            });
+            html += `</div>`;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function viewUnits(rid, bid) {
+            appData.currentView = 'units';
+            const reg = appData.regions.find(r => r.id === rid);
+            const b = reg.buildings.find(b => b.id === bid);
+            document.getElementById('current-command-text').innerText = "وحدات عمارة " + b.name;
+            let html = `<div style="text-align:center;">
+                <div style="display:flex; gap:10px; justify-content:center; margin-bottom:15px;">${renderUnitBox(b.units[10], rid, bid)} ${renderUnitBox(b.units[11], rid, bid)}</div>
+                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; max-width:400px; margin:0 auto 15px auto;">${b.units.slice(2, 10).map(u => renderUnitBox(u, rid, bid)).join('')}</div>
+                <div style="display:flex; gap:10px; justify-content:center;">${renderUnitBox(b.units[0], rid, bid)} ${renderUnitBox(b.units[1], rid, bid)}</div>
+            </div>`;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function renderUnitBox(u, rid, bid) {
+            let color = u.status === 'available' ? 'var(--sahab-green)' : 'var(--sahab-red)';
+            let customer = appData.customers.find(c => c.unit === u.code && c.building === appData.regions.find(r=>r.id===rid).buildings.find(b=>b.id===bid).name);
+            let dblClick = u.status === 'available' ? `executeAction('إضافة')` : `viewCustomerDetail(${appData.customers.indexOf(customer)})`;
+            return `<div class="unit-box" style="background:${color};" onclick="handleItemClick(this, 'unit', '${u.code}', ${rid}, ${bid})" ondblclick="${dblClick}">
+                <span style="font-size:14px;">${u.code}</span>
+                <small style="font-size:8px;">${u.type}</small>
+            </div>`;
+        }
+
+        function renderInstallmentForm(editIndex = null) {
+            if (currentUser !== 'admin') return alert("صلاحية المسؤول فقط");
+            let editData = editIndex !== null ? appData.customers[editIndex] : null;
+            let unitCode = editData ? editData.unit : (appData.selected.ucode || '');
+            let buildingName = editData ? editData.building : (appData.selected.bid ? appData.regions.find(r => r.id === appData.selected.rid).buildings.find(b => b.id === appData.selected.bid).name : '');
+            let regionName = editData ? editData.region : (appData.selected.rid ? appData.regions.find(r => r.id === appData.selected.rid).name : '');
+
+            document.getElementById('current-command-text').innerText = editData ? "تعديل تعاقد" : "جدولة أقساط";
+            
+            let html = `
+                <div class="installment-card">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div><span class="field-label">اسم العميل</span><input type="text" id="custName" class="installment-input" value="${editData ? editData.name : ''}"></div>
+                        <div><span class="field-label">رقم الهاتف</span><input type="text" id="phone" class="installment-input" value="${editData ? editData.phone : ''}"></div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-top:10px;">
+                        <div><span class="field-label">المنطقة</span>
+                            <select id="selRegion" class="installment-input" onchange="updateBuildingSelect(this.value)">
+                                <option value="">اختر المنطقة</option>
+                                ${appData.regions.map(r => `<option value="${r.id}" ${regionName === r.name ? 'selected' : ''}>${r.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div><span class="field-label">العمارة</span>
+                            <select id="selBuilding" class="installment-input" onchange="updateUnitSelect(this.value)">
+                                <option value="">اختر العمارة</option>
+                                ${appData.selected.rid ? appData.regions.find(r => r.id == appData.selected.rid).buildings.map(b => `<option value="${b.id}" ${buildingName === b.name ? 'selected' : ''}>${b.name}</option>`).join('') : ''}
+                            </select>
+                        </div>
+                        <div><span class="field-label">الوحدة</span>
+                            <select id="selUnit" class="installment-input">
+                                <option value="">اختر الوحدة</option>
+                                ${appData.selected.bid ? appData.regions.find(r => r.id == appData.selected.rid).buildings.find(b => b.id == appData.selected.bid).units.map(u => `<option value="${u.code}" ${unitCode === u.code ? 'selected' : ''}>${u.code}</option>`).join('') : ''}
+                            </select>
+                        </div>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <span class="field-label">إجمالي سعر الوحدة</span>
+                        <input type="number" id="totalPrice" class="installment-input" value="${editData ? editData.total : ''}">
+                    </div>
+                </div>
+                <div class="installment-card">
+                    <span class="field-label">إعدادات الأقساط</span>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px;">
+                        <div><small>عدد الأقساط</small><input type="number" id="qCount" class="installment-input" value="${editData ? editData.qCount : 28}"></div>
+                        <div><small>نظام القسط</small>
+                            <select id="qFreq" class="installment-input">
+                                <option value="1" ${editData && editData.qFreq == 1 ? 'selected' : ''}>شهري</option>
+                                <option value="3" ${editData && editData.qFreq == 3 ? 'selected' : ''}>ربع سنوي</option>
+                            </select>
+                        </div>
+                        <div><small>تاريخ أول قسط</small><input type="date" id="qStart" class="installment-input" value="${editData ? editData.qStart : new Date().toISOString().split('T')[0]}"></div>
+                    </div>
+                    <button onclick="processInstallments(${editIndex})" style="width:100%; padding:12px; background:var(--sahab-red); color:white; border:none; border-radius:10px; font-weight:900; cursor:pointer; margin-top:10px;">حفظ التعاقد</button>
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function updateBuildingSelect(rid) {
+            const reg = appData.regions.find(r => r.id == rid);
+            const sel = document.getElementById('selBuilding');
+            sel.innerHTML = '<option value="">اختر العمارة</option>' + reg.buildings.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+            appData.selected.rid = rid;
+        }
+
+        function updateUnitSelect(bid) {
+            const rid = document.getElementById('selRegion').value;
+            const reg = appData.regions.find(r => r.id == rid);
+            const bld = reg.buildings.find(b => b.id == bid);
+            const sel = document.getElementById('selUnit');
+            sel.innerHTML = '<option value="">اختر الوحدة</option>' + bld.units.map(u => `<option value="${u.code}">${u.code}</option>`).join('');
+            appData.selected.bid = bid;
+        }
+
+        function processInstallments(editIndex = null) {
+            let name = document.getElementById('custName').value;
+            let phone = document.getElementById('phone').value;
+            let total = parseFloat(document.getElementById('totalPrice').value) || 0;
+            let rid = document.getElementById('selRegion').value;
+            let bid = document.getElementById('selBuilding').value;
+            let ucode = document.getElementById('selUnit').value;
+
+            if(!name || !phone || !rid || !bid || !ucode) return alert("يرجى إكمال كافة البيانات");
+
+            let regionObj = appData.regions.find(r => r.id == rid);
+            let buildingObj = regionObj.buildings.find(b => b.id == bid);
+
+            let qCount = parseInt(document.getElementById('qCount').value) || 1;
+            let qFreq = parseInt(document.getElementById('qFreq').value);
+            let qStart = document.getElementById('qStart').value;
+
+            let installments = [];
+            let instAmt = Math.round((total / qCount) * 100) / 100;
+            for(let i=0; i<qCount; i++) {
+                let d = new Date(qStart);
+                d.setMonth(d.getMonth() + (i * qFreq));
+                installments.push({ d: d.toISOString().split('T')[0], a: instAmt, t: "قسط دوري", status: 'pending' });
+            }
+
+            let customerData = { name, phone, total, qCount, qFreq, qStart, region: regionObj.name, building: buildingObj.name, unit: ucode, installments };
+
+            if(editIndex !== null) { appData.customers[editIndex] = customerData; } 
+            else { appData.customers.push(customerData); }
+            
+            buildingObj.units.find(u => u.code === ucode).status = 'sold';
+            saveData();
+            renderCustomerRegistry();
+        }
+
+        function renderCustomerRegistry() {
+            appData.currentView = 'registry';
+            document.getElementById('current-command-text').innerText = "سجل العملاء";
+            let html = `<table class="res-table">
+                <thead><tr><th>الاسم</th><th>الهاتف</th><th>المنطقة</th><th>العمارة</th><th>الوحدة</th><th>إجمالي العقد</th></tr></thead>
+                <tbody>
+                    ${appData.customers.map((c, i) => `
+                        <tr class="card-item-row" onclick="handleItemClick(this, 'customer', ${i})" ondblclick="viewCustomerDetail(${i})" style="cursor:pointer;">
+                            <td>${c.name}</td><td>${c.phone}</td><td>${c.region}</td><td>${c.building}</td><td>${c.unit}</td><td>${c.total.toLocaleString()}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>`;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function viewCustomerDetail(index) {
+            const c = appData.customers[index];
+            document.getElementById('current-command-text').innerText = "تفاصيل العميل: " + c.name;
+            let html = `
+                <div class="installment-card">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div><span class="field-label">الاسم</span><div class="installment-input">${c.name}</div></div>
+                        <div><span class="field-label">الهاتف</span><div class="installment-input">${c.phone}</div></div>
+                        <div><span class="field-label">الوحدة</span><div class="installment-input">${c.building} / ${c.unit}</div></div>
+                        <div><span class="field-label">إجمالي العقد</span><div class="installment-input">${c.total.toLocaleString()}</div></div>
+                    </div>
+                    <div style="margin-top:15px; display:flex; gap:10px;">
+                        <button onclick="renderInstallmentForm(${index})" style="flex:1; padding:10px; background:var(--gold); border:none; border-radius:8px; font-weight:bold; cursor:pointer;">تعديل البيانات</button>
+                    </div>
+                </div>
+                <div class="installment-card">
+                    <h3 style="color:var(--sahab-red); font-size:16px;">جدول الأقساط</h3>
+                    <table class="res-table">
+                        <thead><tr><th>م</th><th>التاريخ</th><th>المبلغ</th><th>البيان</th><th>الحالة</th></tr></thead>
+                        <tbody>
+                            ${c.installments.map((x, i) => `<tr><td>${i+1}</td><td>${x.d}</td><td>${x.a.toLocaleString()}</td><td>${x.t}</td><td style="color:${x.status==='paid'?'green':'red'}">${x.status==='paid'?'محصل':'غير مسدد'}</td></tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function executeAction(name) {
+            if (currentUser !== 'admin' && ['إضافة', 'تعديل', 'حذف', 'تحصيل قسط', 'إضافة عميل'].includes(name)) {
+                return alert("عذراً، لا تمتلك صلاحية لهذا الإجراء (للمسؤول فقط)");
+            }
+            if (name === 'إضافة') {
+                if (appData.currentView === 'regions') addRegion();
+                else if (appData.currentView === 'buildings') addBuilding();
+                else renderInstallmentForm();
+            } else if (name === 'إضافة عميل') {
+                renderInstallmentForm();
+            } else if (name === 'سجل العملاء') {
+                renderCustomerRegistry();
+            } else if (name === 'المصاريف') {
+                renderExpenses();
+            } else if (name === 'تحصيل قسط') {
+                renderCollection();
+            } else if (name === 'تعديل') {
+                if (!appData.selected.type) return alert("يرجى تحديد عنصر أولاً");
+                if (appData.selected.type === 'customer') renderInstallmentForm(appData.selected.index);
+                else if (appData.selected.type === 'region') editRegion(appData.selected.id);
+                else if (appData.selected.type === 'building') editBuilding(appData.selected.rid, appData.selected.id);
+            } else if (name === 'حذف') {
+                if (!appData.selected.type) return alert("يرجى تحديد عنصر أولاً");
+                if (appData.selected.type === 'customer') deleteCustomer(appData.selected.index);
+                else if (appData.selected.type === 'region') deleteRegion(appData.selected.id);
+                else if (appData.selected.type === 'building') deleteBuilding(appData.selected.rid, appData.selected.id);
+            } else if (name === 'أقساط الشهر الحالى') {
+                renderInstallmentReport('month');
+            } else if (name === 'أقساط متأخرة') {
+                renderInstallmentReport('late');
+            } else if (name === 'الخزينة') {
+                renderTreasury();
+            }
+        }
+
+        function editRegion(id) {
+            let reg = appData.regions.find(r => r.id === id);
+            let newName = prompt("تعديل اسم المنطقة:", reg.name);
+            if (newName) { reg.name = newName; saveData(); renderRegions(); }
+        }
+
+        function editBuilding(rid, bid) {
+            let reg = appData.regions.find(r => r.id === rid);
+            let bld = reg.buildings.find(b => b.id === bid);
+            let newName = prompt("تعديل اسم/رقم العمارة:", bld.name);
+            if (newName) { bld.name = newName; saveData(); renderBuildings(rid); }
+        }
+
+        function deleteBuilding(rid, bid) {
+            if (confirm("هل أنت متأكد من حذف هذه العمارة؟")) {
+                let reg = appData.regions.find(r => r.id === rid);
+                reg.buildings = reg.buildings.filter(b => b.id !== bid);
+                saveData();
+                renderBuildings(rid);
+            }
+        }
+
+        function renderTreasury() {
+            document.getElementById('current-command-text').innerText = "الخزينة";
+            let totalIncome = 0;
+            appData.customers.forEach(c => c.installments.forEach(inst => { if(inst.status === 'paid') totalIncome += inst.a; }));
+            let totalOut = appData.expenses.reduce((s, e) => s + e.amount, 0);
+            let html = `
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:20px;">
+                    <div class="dashboard-card" style="border-top-color:var(--sahab-green);"><div class="value">${totalIncome.toLocaleString()}</div><div class="label">إجمالي المحصل</div></div>
+                    <div class="dashboard-card" style="border-top-color:var(--sahab-red);"><div class="value">${totalOut.toLocaleString()}</div><div class="label">إجمالي المصروفات</div></div>
+                    <div class="dashboard-card" style="border-top-color:var(--blue);"><div class="value">${(totalIncome - totalOut).toLocaleString()}</div><div class="label">صافي الخزينة</div></div>
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function addRegion() {
+            let name = prompt("أدخل اسم المنطقة الجديدة:");
+            if(name) { appData.regions.push({ id: Date.now(), name, buildings: [] }); saveData(); renderRegions(); }
+        }
+
+        function deleteRegion(id) {
+            if(confirm("هل أنت متأكد؟")) { appData.regions = appData.regions.filter(r => r.id !== id); saveData(); renderRegions(); }
+        }
+
+        function addBuilding() {
+            let rid = appData.selected.rid;
+            if(!rid && appData.regions.length > 0) {
+                let choice = prompt("اختر رقم المنطقة:\n" + appData.regions.map((r, i) => `${i+1}- ${r.name}`).join('\n'));
+                if(choice && appData.regions[choice-1]) rid = appData.regions[choice-1].id;
+            }
+            if(!rid) return alert("حدد المنطقة أولاً");
+            
+            let name = prompt("أدخل رقم أو اسم العمارة الجديدة:");
+            if(!name) return;
+
+            let unitsToCopy = null;
+            let allBuildings = appData.regions.flatMap(r => r.buildings);
+            if (allBuildings.length > 0) {
+                let copyChoice = confirm("هل تريد نسخ هيكل الوحدات من عمارة موجودة؟");
+                if (copyChoice) {
+                    let bList = allBuildings.map((b, i) => `${i+1}- ${b.name}`).join('\n');
+                    let bIdx = prompt("اختر العمارة للنسخ منها:\n" + bList);
+                    if (bIdx && allBuildings[bIdx-1]) {
+                        unitsToCopy = allBuildings[bIdx-1].units.map(u => ({ ...u, status: 'available' }));
+                    }
+                }
+            }
+
+            const reg = appData.regions.find(r => r.id === rid);
+            reg.buildings.push({ id: Date.now(), name, units: generateSahabUnits(unitsToCopy) });
+            saveData();
+            renderBuildings(rid);
+        }
+
+        function renderExpenses() {
+            appData.currentView = 'expenses';
+            document.getElementById('current-command-text').innerText = "المصاريف";
+            let html = `
+                <div class="installment-card">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div><span class="field-label">المبلغ</span><input type="number" id="exAmt" class="installment-input"></div>
+                        <div><span class="field-label">العمارة</span>
+                            <select id="exBld" class="installment-input">
+                                ${appData.regions.flatMap(r => r.buildings.map(b => `<option value="${b.name}">${b.name}</option>`)).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="addExpense()" style="width:100%; padding:10px; background:var(--sahab-red); color:white; border:none; border-radius:10px; margin-top:10px; cursor:pointer;">إضافة مصروف</button>
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function addExpense() {
+            const amount = parseFloat(document.getElementById('exAmt').value);
+            const building = document.getElementById('exBld').value;
+            if(!amount) return alert("أدخل المبلغ");
+            appData.expenses.push({ date: new Date().toISOString().split('T')[0], amount, building, note: 'مصروف عام' });
+            saveData();
+            renderExpenses();
+        }
+
+        function renderCollection() {
+            document.getElementById('current-command-text').innerText = "تحصيل قسط";
+            let html = `
+                <div class="installment-card">
+                    <span class="field-label">البحث عن عميل للتحصيل</span>
+                    <input type="text" class="installment-input" placeholder="اكتب الاسم أو الهاتف..." oninput="searchCollection(this.value)">
+                </div>
+                <div id="searchResult"></div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function searchCollection(val) {
+            if(!val) { document.getElementById('searchResult').innerHTML = ''; return; }
+            let filtered = appData.customers.filter(c => c.name.includes(val) || c.phone.includes(val));
+            document.getElementById('searchResult').innerHTML = filtered.map(c => `
+                <div class="card-item" style="margin-bottom:5px;" onclick="renderCollectionForCustomer(${appData.customers.indexOf(c)})">
+                    ${c.name} - ${c.unit}
+                </div>
+            `).join('');
+        }
+
+        function renderCollectionForCustomer(index) {
+            const c = appData.customers[index];
+            document.getElementById('current-command-text').innerText = "تحصيل من: " + c.name;
+            let html = `
+                <div class="installment-card">
+                    <h3 style="color:var(--sahab-red);">الأقساط المستحقة</h3>
+                    <table class="res-table">
+                        <thead><tr><th>م</th><th>التاريخ</th><th>المبلغ</th><th>إجراء</th></tr></thead>
+                        <tbody>
+                            ${c.installments.map((x, i) => x.status === 'pending' ? `
+                                <tr><td>${i+1}</td><td>${x.d}</td><td>${x.a.toLocaleString()}</td>
+                                    <td><button onclick="collectInstallment(${index}, ${i})" style="background:var(--sahab-green); color:white; border:none; padding:5px; border-radius:5px; cursor:pointer;">تحصيل</button></td>
+                                </tr>
+                            ` : '').join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function collectInstallment(custIndex, instIndex) {
+            if(confirm("تأكيد تحصيل هذا المبلغ؟")) {
+                appData.customers[custIndex].installments[instIndex].status = 'paid';
+                saveData();
+                alert("تم التحصيل بنجاح");
+                viewCustomerDetail(custIndex);
+            }
+        }
+
+        function renderInstallmentReport(type) {
+            const today = new Date();
+            document.getElementById('current-command-text').innerText = type === 'month' ? "أقساط الشهر الحالي" : "أقساط متأخرة";
+            let list = [];
+            appData.customers.forEach(c => {
+                c.installments.forEach(inst => {
+                    if(inst.status === 'pending') {
+                        const d = new Date(inst.d);
+                        if(type === 'month' && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear()) list.push({ ...inst, cust: c.name, unit: c.unit });
+                        if(type === 'late' && d < today) list.push({ ...inst, cust: c.name, unit: c.unit });
+                    }
+                });
+            });
+            let html = `<table class="res-table">
+                <thead><tr><th>العميل</th><th>الوحدة</th><th>التاريخ</th><th>المبلغ</th></tr></thead>
+                <tbody>
+                    ${list.map(x => `<tr><td>${x.cust}</td><td>${x.unit}</td><td>${x.d}</td><td>${x.a.toLocaleString()}</td></tr>`).join('')}
+                </tbody>
+            </table>`;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function deleteCustomer(index) {
+            if(confirm("هل أنت متأكد؟")) {
+                const c = appData.customers[index];
+                appData.regions.forEach(r => r.buildings.forEach(b => {
+                    let u = b.units.find(u => u.code === c.unit && b.name === c.building);
+                    if(u) u.status = 'available';
+                }));
+                appData.customers.splice(index, 1);
+                saveData();
+                renderCustomerRegistry();
+            }
+        }
+
+        function checkNotifications() {
+            let today = new Date().toISOString().split('T')[0];
+            let count = 0;
+            appData.customers.forEach(c => c.installments.forEach(inst => { if(inst.status === 'pending' && inst.d <= today) count++; }));
+            const badge = document.getElementById('notif-count');
+            badge.innerText = count;
+            badge.style.display = count > 0 ? 'block' : 'none';
+        }
+
+        function goBack() {
+            if(appData.currentView === 'units') renderBuildings(appData.selected.rid);
+            else if(appData.currentView === 'buildings') renderRegions();
+            else renderDashboard();
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString('ar-EG');
+            document.getElementById('date').innerText = now.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        window.onload = () => { checkNotifications(); };
+    </script>
+</body>
+</html>
