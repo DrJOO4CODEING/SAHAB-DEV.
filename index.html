@@ -130,8 +130,8 @@
             <img src="https://i.postimg.cc/xqSdpmBX/lqtt-shasht-2026-02-12-035734.png" alt="Logo" style="width:120px; margin-bottom:20px;">
             <h2 style="color:var(--sahab-red); margin-bottom:20px;">تسجيل الدخول</h2>
             <select id="user-type" class="login-input">
-                <option value="admin">المسؤول (Admin)</option>
-                <option value="viewer">المشاهد (Viewer)</option>
+                <option value="admin">Admin </option>
+                <option value="viewer">User </option>
             </select>
             <input type="password" id="login-pass" class="login-input" placeholder="كلمة السر">
             <button class="login-btn" onclick="login()">دخول</button>
@@ -270,7 +270,7 @@
 
         // --- الإعدادات ---
         function renderSettings() {
-            if (currentUser !== 'admin') return alert("صلاحية المسؤول فقط");
+            if (currentUser !== 'admin') return alert("صلاحية Admin فقط");
             appData.currentView = 'settings';
             document.getElementById('current-command-text').innerText = "إعدادات النظام";
             let html = `
@@ -278,11 +278,11 @@
                     <h3 style="color:var(--sahab-red);">تغيير كلمات السر</h3>
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
                         <div>
-                            <span class="field-label">كلمة سر المسؤول (Admin)</span>
+                            <span class="field-label">كلمة سر Admin (Admin)</span>
                             <input type="text" id="new-admin-pass" class="installment-input" value="${passwords.admin}">
                         </div>
                         <div>
-                            <span class="field-label">كلمة سر المشاهد (Viewer)</span>
+                            <span class="field-label">كلمة سر User (Viewer)</span>
                             <input type="text" id="new-viewer-pass" class="installment-input" value="${passwords.viewer}">
                         </div>
                     </div>
@@ -489,7 +489,7 @@
         }
 
         function renderInstallmentForm(editIndex = null) {
-            if (currentUser !== 'admin') return alert("صلاحية المسؤول فقط");
+            if (currentUser !== 'admin') return alert("صلاحية Admin فقط");
             let editData = editIndex !== null ? appData.customers[editIndex] : null;
             let unitCode = editData ? editData.unit : (appData.selected.ucode || '');
             let buildingName = editData ? editData.building : (appData.selected.bid ? appData.regions.find(r => r.id === appData.selected.rid).buildings.find(b => b.id === appData.selected.bid).name : '');
