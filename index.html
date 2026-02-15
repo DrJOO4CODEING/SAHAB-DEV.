@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>شركة سحاب للتطوير يوسف العقارى</title>
+    <title>شركة سحاب للتطوير العقارى</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -85,6 +85,15 @@
         }
         .action-btn-main:hover:not(:disabled) { background: #f9f9f9; border-color: var(--sahab-red); }
         .action-btn-main:disabled { opacity: 0.5; cursor: not-allowed; background: #eee; }
+        
+        /* Hover effects for icons */
+        .cmd-btn i, .action-btn-main i { transition: all 0.3s ease; }
+        .cmd-btn:hover i { color: var(--sahab-red); transform: scale(1.2); }
+        .action-btn-main:hover:not(:disabled) i { color: var(--sahab-red); transform: scale(1.15); }
+        
+        /* Sector-3 button hover effects */
+        #sector-3 button:hover { background: #f5f5f5 !important; border-color: var(--sahab-red) !important; transform: translateY(-2px); box-shadow: 0 2px 8px rgba(139, 26, 26, 0.15); }
+        #sector-3 button:hover i { color: #c71616; transform: scale(1.3); }
 
         .installment-card { background: white; border-radius: 15px; padding: 15px; border: 1px solid var(--border); margin-bottom: 10px; }
         .field-label { color: var(--sahab-red); margin-bottom: 3px; display: block; font-size: 13px; font-weight: 900; }
@@ -120,6 +129,16 @@
 
         @media print { .no-print { display: none !important; } body { display: block; } }
         .card-item-row.selected { background: #fff5f5 !important; border-right: 4px solid var(--sahab-red); }
+        
+        /* New Styles for Expenses and Icons */
+        .building-icon-card {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; background: white; border: 2px solid #eee; border-radius: 15px;
+            cursor: pointer; transition: 0.3s; border-bottom: 5px solid var(--sahab-red);
+        }
+        .building-icon-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .building-icon-card i { font-size: 40px; color: var(--sahab-red); margin-bottom: 10px; }
+        .building-icon-card span { font-weight: bold; font-size: 16px; }
     </style>
 </head>
 <body>
@@ -149,7 +168,7 @@
             <div style="display: flex; align-items: center; gap: 10px; direction: ltr;">
                 <div style="text-align: right;">
                     <div style="font-weight: 900; color: #e74c3c; font-size: 18px; line-height: 1;">سحاب </div>
-                    <div style="font-size: 9px; color: #666; font-weight: bold;">SAHAB DEV.</div>
+                    <div style="font-size: 9px; color: #666; font-weight: bold;">SAHAB </div>
                 </div>
                 <div style="width:60px; height:60px; background: #fff; border-radius:10px; display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px solid #eee;">
                     <img src="https://i.postimg.cc/xqSdpmBX/lqtt-shasht-2026-02-12-035734.png" alt="Logo" style="width:100%; height:100%; object-fit:contain;">
@@ -157,21 +176,19 @@
             </div>
         </div>
         <div id="main-content" style="flex: 1; padding:20px; background: #fafafa; overflow-y: auto;"></div>
-</div>
+    </div>
 
     <!-- قطاع 4: الأزرار (أسفل يسار) -->
     <div id="sector-4" class="no-print">
-        <button class="action-btn-main" id="btn-add" onclick="executeAction('إضافة')">إضافة</button>
-        <button class="action-btn-main" id="btn-edit" onclick="executeAction('تعديل')">تعديل</button>
-        <button class="action-btn-main" id="btn-delete" style="color:#e74c3c;" onclick="executeAction('حذف')">حذف</button>
-        <button class="action-btn-main" style="color:#3498db;" onclick="window.print()">طباعة</button>
-        <button class="action-btn-main" style="color:#666;" onclick="goBack()">رجوع</button>
-        <button class="action-btn-main" style="background: var(--sahab-green); color: white; cursor: pointer;" onclick="addExternalRow()">
-    <i class="fas fa-wallet"></i> مصروفات خارجية
-</button>
-        <button onclick="showNotifications()" style="width:60px; height:50px; color:#e74c3c; background:white; border:1px solid #ddd; border-radius:10px; position:relative;">
-            <i class="fas fa-bell"></i>
-            <span id="notif-count" style="background:red; color:white; border-radius:50%; padding:2px 6px; font-size:9px; position:absolute; top:5px; right:5px; display:none;">0</span>
+        <button class="action-btn-main" id="btn-add" onclick="executeAction('إضافة')" title="إضافة عميل أو منطقة جديدة"><i class="fas fa-plus" style="margin-left: 8px;"></i>إضافة</button>
+        <button class="action-btn-main" id="btn-edit" onclick="executeAction('تعديل')" title="تعديل البيانات المحددة"><i class="fas fa-edit" style="margin-left: 8px;"></i>تعديل</button>
+        <button class="action-btn-main" id="btn-delete" style="color:#e74c3c;" onclick="executeAction('حذف')" title="حذف البيان المحدد"><i class="fas fa-trash" style="margin-left: 8px;"></i>حذف</button>
+        <button class="action-btn-main" style="color:#3498db;" onclick="window.print()" title="طباعة البيانات الحالية"><i class="fas fa-print" style="margin-left: 8px;"></i>طباعة</button>
+        <button class="action-btn-main" style="color:#666;" onclick="goBack()" title="العودة للقائمة السابقة"><i class="fas fa-arrow-left" style="margin-left: 8px;"></i>رجوع</button>
+        <button onclick="renderExternalExpenses()" style="padding: 10px 20px; background: var(--sahab-green); color: white; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s;" title="إدارة المصروفات الشخصية"><i class="fas fa-wallet" style="margin-left: 5px;"></i>مصروفات خارجية</button>
+        <button onclick="showNotifications()" style="width:60px; height:50px; color:#e74c3c; background:white; border:1px solid #ddd; border-radius:10px; position:relative; transition: 0.3s;" title="عرض الإشعارات والمستحقات">
+            <i class="fas fa-bell" style="font-size: 20px;"></i>
+            <span id="notif-count" style="background:red; color:white; border-radius:50%; padding:2px 6px; font-size:9px; position:absolute; top:5px; right:5px; display:none; font-weight: bold;">0</span>
         </button>
     </div>
 
@@ -183,18 +200,17 @@
             <div id="date" style="font-size: 12px; font-weight: 900; color: #555;">--/--/----</div>
         </div>
         <div style="display: flex; flex-direction: column; gap: 5px; flex: 1; margin-top: 10px;">
-            <button class="cmd-btn" onclick="renderDashboard()">لوحة التحكم</button>
-            <button class="cmd-btn" onclick="executeAction('سجل العملاء')">سجل العملاء</button>
-            <button class="cmd-btn" id="btn-collect" onclick="executeAction('تحصيل قسط')" style="border-right-color: var(--sahab-green);">تحصيل قسط</button>
-            <button class="cmd-btn" onclick="executeAction('أقساط الشهر الحالى')">اقساط الشهر الحالى</button>
-            <button class="cmd-btn" onclick="executeAction('أقساط متأخرة')">اقساط متاخرة</button>
+            <button class="cmd-btn" onclick="renderDashboard()" title="عرض ملخص النظام"><i class="fas fa-chart-line" style="margin-left: 8px;"></i>لوحة التحكم</button>
+            <button class="cmd-btn" onclick="executeAction('سجل العملاء')" title="عرض قائمة جميع العملاء"><i class="fas fa-list" style="margin-left: 8px;"></i>سجل العملاء</button>
+            <button class="cmd-btn" id="btn-collect" onclick="executeAction('تحصيل قسط')" style="border-right-color: var(--sahab-green);" title="تسجيل دفعات من العملاء"><i class="fas fa-coins" style="margin-left: 8px;"></i>تحصيل قسط</button>
             <div style="display: flex; gap: 5px;">
-                <button class="cmd-btn" onclick="exportBackup()" style="border-right-color: var(--blue); font-size: 11px; padding: 10px 5px;"><i class="fas fa-download"></i> تصدير نسخة</button>
-                <button class="cmd-btn" id="btn-import" onclick="document.getElementById('importFile').click()" style="border-right-color: var(--gold); font-size: 11px; padding: 10px 5px;"><i class="fas fa-upload"></i> استيراد نسخة</button>
+                <button class="cmd-btn" onclick="exportBackup()" style="border-right-color: var(--blue); font-size: 10px; padding: 10px 5px; flex: 1;" title="حفظ نسخة من البيانات"><i class="fas fa-download" style="margin-left: 3px;"></i> تصدير</button>
+                <button class="cmd-btn" id="btn-import" onclick="document.getElementById('importFile').click()" style="border-right-color: var(--gold); font-size: 10px; padding: 10px 5px; flex: 1;" title="استرجاع نسخة سابقة"><i class="fas fa-upload" style="margin-left: 3px;"></i> استيراد</button>
             </div>
             <input type="file" id="importFile" style="display:none" onchange="handleImport(event)">
-            <button class="cmd-btn" id="btn-settings" onclick="renderSettings()" style="border-right-color: #666;"><i class="fas fa-cog"></i> الإعدادات</button>
-            <button class="cmd-btn" onclick="logout()" style="border-right-color: #000; background: #f9f9f9;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</button>
+            <button class="cmd-btn" onclick="renderCollectionsManager()" style="border-right-color: #ff9800;" title="إدارة وتعديل التحصيلات"><i class="fas fa-file-invoice-dollar" style="margin-left: 8px;"></i> إدارة التحصيلات</button>
+            <button class="cmd-btn" id="btn-settings" onclick="renderSettings()" style="border-right-color: #666;" title="تغيير إعدادات النظام"><i class="fas fa-cog" style="margin-left: 8px;"></i> الإعدادات</button>
+            <button class="cmd-btn" onclick="logout()" style="border-right-color: #000; background: #f9f9f9;" title="الخروج من النظام"><i class="fas fa-sign-out-alt" style="margin-left: 8px; color: #e74c3c;"></i> تسجيل الخروج</button>
         </div>
     </div>
 
@@ -202,41 +218,23 @@
     <div id="sector-3" class="no-print">
         <div style="font-weight: 900; font-size: 14px; text-align: center;">الهيكل والمالية</div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-            <button onclick="renderRegions()" style="font-size: 11px; padding: 10px 0; cursor:pointer; font-weight:bold; background:#fff; border:1px solid #ddd; border-radius:5px;">مناطق الشركة</button>
-            <button id="btn-add-cust" onclick="executeAction('إضافة عميل')" style="font-size: 11px; padding: 10px 0; cursor:pointer; font-weight:bold; background:#fff; border:1px solid #ddd; border-radius:5px;">اضافة عميل</button>
-            <button onclick="executeAction('المصاريف')" style="font-size: 11px; padding: 10px 0; cursor:pointer; font-weight:bold; background:#fff; border:1px solid #ddd; border-radius:5px;">المصاريف</button>
-            <button onclick="executeAction('الخزينة')" style="font-size: 11px; padding: 10px 0; cursor:pointer; font-weight:bold; background:#fff; border:1px solid #ddd; border-radius:5px;">الخزينة</button>
+            <button onclick="renderRegions()" style="font-size: 11px; padding: 10px 0; cursor:pointer; font-weight:bold; background:#fff; border:1px solid #ddd; border-radius:5px; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.3s;" title="عرض جميع مناطق المشروع"><i class="fas fa-map" style="color: #e74c3c;"></i>مناطق الشركة</button>
+            <button id="btn-add-cust" onclick="executeAction('إضافة عميل')" style="font-size: 11px; padding: 10px 0; cursor:pointer; font-weight:bold; background:#fff; border:1px solid #ddd; border-radius:5px; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.3s;" title="إضافة عميل جديد"><i class="fas fa-user-plus" style="color: #e74c3c;"></i>إضافة عميل</button>
+            <button onclick="executeAction('المصاريف')" style="font-size: 11px; padding: 10px 0; cursor:pointer; font-weight:bold; background:#fff; border:1px solid #ddd; border-radius:5px; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.3s;" title="إدارة مصاريف المشروع"><i class="fas fa-receipt" style="color: #e74c3c;"></i>المصاريف</button>
+            <button onclick="executeAction('الخزينة')" style="font-size: 11px; padding: 10px 0; cursor:pointer; font-weight:bold; background:#fff; border:1px solid #ddd; border-radius:5px; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.3s;" title="عرض صافي الخزينة"><i class="fas fa-vault" style="color: #e74c3c;"></i>الخزينة</button>
         </div>
-        <div id="external-expenses-area" style="margin-top: 30px; padding: 20px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid #eee;">
-    <h3 style="color: var(--sahab-red); border-bottom: 2px solid var(--sahab-red); padding-bottom: 10px; margin-bottom: 20px;">
-        <i class="fas fa-wallet"></i> مصروفات خارجية (خارج الخزينة)
-    </h3>
-    
-    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
-        <input type="date" id="ext-date" class="login-input" style="flex: 1; min-width: 150px; margin: 0;">
-        <input type="text" id="ext-desc" placeholder="بيان المصروف" class="login-input" style="flex: 2; min-width: 200px; margin: 0;">
-        <input type="number" id="ext-amount" placeholder="المبلغ" class="login-input" style="flex: 1; min-width: 100px; margin: 0;">
-        <button onclick="addExternalRow()" style="background: var(--sahab-red); color: white; border: none; padding: 10px 25px; border-radius: 8px; cursor: pointer; font-weight: bold;">حفظ</button>
+        <div id="tree-container" style="overflow-y: auto; flex: 1; margin-top: 5px; border-top: 1px solid #eee;"></div>
     </div>
 
-    <div style="max-height: 300px; overflow-y: auto;">
-        <table style="width: 100%; border-collapse: collapse; text-align: right;">
-            <thead style="position: sticky; top: 0; background: #f9f9f9;">
-                <tr>
-                    <th style="padding: 10px; border-bottom: 1px solid #ddd;">التاريخ</th>
-                    <th style="padding: 10px; border-bottom: 1px solid #ddd;">البيان</th>
-                    <th style="padding: 10px; border-bottom: 1px solid #ddd;">المبلغ</th>
-                </tr>
-            </thead>
-            <tbody id="ext-table-body">
-                </tbody>
-        </table>
-    </div>
-</div>
-    </div>
+    <!-- Style updates for better icon display -->
+    <style>
+        .cmd-btn { display: flex; align-items: center; justify-content: flex-end; }
+        .action-btn-main { display: flex; align-items: center; justify-content: center; font-size: 13px; }
+        .cmd-btn:hover { background: #f0f0f0; border-right-color: var(--sahab-red); }
+    </style>
 
     <script>
-        // --- نظام الحماية ---
+        // --- نظام الحماية والتخزين ---
         let currentUser = null;
         let passwords = JSON.parse(localStorage.getItem('sahab_passwords')) || { admin: '123', viewer: '456' };
 
@@ -248,6 +246,8 @@
                 document.getElementById('login-screen').style.display = 'none';
                 applyPermissions();
                 renderDashboard();
+                renderTree();
+                console.log('✅ تم تحميل البيانات من التخزين المحلي');
             } else {
                 document.getElementById('login-error').style.display = 'block';
             }
@@ -272,235 +272,203 @@
             });
         }
 
-        // --- البيانات الأساسية ---
+        // --- البيانات المدمجة في الملف ---
+        let embeddedDataJson = `{
+  "regions": [],
+  "customers": [],
+  "expenses": [],
+  "externalExpenses": [],
+  "collections": [],
+  "lastUpdate": "${new Date().toISOString()}"
+}`;
+
         let appData = {
-            regions: JSON.parse(localStorage.getItem('sahab_regions')) || [],
-            customers: JSON.parse(localStorage.getItem('sahab_customers')) || [],
-            expenses: JSON.parse(localStorage.getItem('sahab_expenses')) || [],
+            regions: [],
+            customers: [],
+            expenses: [],
+            externalExpenses: [],
+            collections: [],
             selected: { type: null, id: null, rid: null, bid: null, ucode: null, index: null },
             currentView: 'dashboard'
         };
-        
 
-        function generateSahabUnits(customUnits = null) {
-            if (customUnits) return JSON.parse(JSON.stringify(customUnits));
-            let units = [];
-            for(let i=1; i<=12; i++) {
-                units.push({ code: 'U' + i, status: 'available', type: i <= 2 ? 'تجاري' : 'سكني' });
+        function initializeData() {
+            // محاولة تحميل من localStorage أولاً
+            let hasLocalData = false;
+            if (localStorage.getItem('sahab_regions')) {
+                appData.regions = JSON.parse(localStorage.getItem('sahab_regions'));
+                hasLocalData = true;
             }
-            return units;
-        }
-
-        function saveData() {
-            localStorage.setItem('sahab_regions', JSON.stringify(appData.regions));
-            localStorage.setItem('sahab_customers', JSON.stringify(appData.customers));
-            localStorage.setItem('sahab_expenses', JSON.stringify(appData.expenses));
-            checkNotifications();
-        }
-
-        // --- الإعدادات ---
-        function renderSettings() {
-            if (currentUser !== 'admin') return alert("صلاحية Admin فقط");
-            appData.currentView = 'settings';
-            document.getElementById('current-command-text').innerText = "إعدادات النظام";
-            let html = `
-                <div class="installment-card">
-                    <h3 style="color:var(--sahab-red);">تغيير كلمات السر</h3>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
-                        <div>
-                            <span class="field-label">كلمة سر Admin (Admin)</span>
-                            <input type="text" id="new-admin-pass" class="installment-input" value="${passwords.admin}">
-                        </div>
-                        <div>
-                            <span class="field-label">كلمة سر User (Viewer)</span>
-                            <input type="text" id="new-viewer-pass" class="installment-input" value="${passwords.viewer}">
-                        </div>
-                    </div>
-                    <button onclick="updatePasswords()" style="width:100%; padding:12px; background:var(--sahab-green); color:white; border:none; border-radius:10px; font-weight:900; cursor:pointer; margin-top:20px;">حفظ كلمات السر الجديدة</button>
-                </div>
-            `;
-            document.getElementById('main-content').innerHTML = html;
-        }
-
-        function updatePasswords() {
-            const adminP = document.getElementById('new-admin-pass').value;
-            const viewerP = document.getElementById('new-viewer-pass').value;
-            if (!adminP || !viewerP) return alert("يرجى إدخال كلمات السر");
-            passwords.admin = adminP;
-            passwords.viewer = viewerP;
-            localStorage.setItem('sahab_passwords', JSON.stringify(passwords));
-            alert("تم تحديث كلمات السر بنجاح");
-        }
-
-        // --- نظام النسخ الاحتياطي ---
-        function exportBackup() {
-            const dataStr = JSON.stringify(appData);
-            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-            const exportFileDefaultName = 'sahab_backup_' + new Date().toISOString().split('T')[0] + '.json';
-            const linkElement = document.createElement('a');
-            linkElement.setAttribute('href', dataUri);
-            linkElement.setAttribute('download', exportFileDefaultName);
-            linkElement.click();
-        }
-
-        function handleImport(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
+            if (localStorage.getItem('sahab_customers')) {
+                appData.customers = JSON.parse(localStorage.getItem('sahab_customers'));
+            }
+            if (localStorage.getItem('sahab_expenses')) {
+                appData.expenses = JSON.parse(localStorage.getItem('sahab_expenses'));
+            }
+            if (localStorage.getItem('sahab_external_expenses')) {
+                appData.externalExpenses = JSON.parse(localStorage.getItem('sahab_external_expenses'));
+            }
+            if (localStorage.getItem('sahab_collections')) {
+                appData.collections = JSON.parse(localStorage.getItem('sahab_collections'));
+            }
+            
+            // إذا ما فيه بيانات محلية، حاول تحميل من البيانات المدمجة
+            if (!hasLocalData) {
                 try {
-                    const importedData = JSON.parse(e.target.result);
-                    if (importedData.regions && importedData.customers) {
-                        showImportOptions(importedData);
-                    } else { alert("ملف غير صالح"); }
-                } catch (err) { alert("خطأ في قراءة الملف"); }
-            };
-            reader.readAsText(file);
-        }
-
-        function showImportOptions(importedData) {
-            const choice = confirm("هل تريد 'دمج' البيانات الجديدة مع الحالية؟\n\n- اضغط OK للدمج.\n- اضغط Cancel للاستبدال.");
-            if (choice) {
-                importedData.regions.forEach(impReg => {
-                    let existingReg = appData.regions.find(r => r.name === impReg.name);
-                    if (!existingReg) { appData.regions.push(impReg); } 
-                    else {
-                        impReg.buildings.forEach(impBld => {
-                            let existingBld = existingReg.buildings.find(b => b.name === impBld.name);
-                            if (!existingBld) existingReg.buildings.push(impBld);
-                        });
-                    }
-                });
-                importedData.customers.forEach(impCust => {
-                    let exists = appData.customers.find(c => c.name === impCust.name && c.unit === impCust.unit);
-                    if (!exists) appData.customers.push(impCust);
-                });
-                saveData();
-                alert("تم دمج البيانات بنجاح");
-                location.reload();
-            } else {
-                if (confirm("تحذير: سيتم مسح كافة البيانات الحالية. هل أنت متأكد؟")) {
-                    exportBackup();
-                    appData = importedData;
-                    saveData();
-                    alert("تم استبدال البيانات بنجاح");
-                    location.reload();
+                    let embedded = JSON.parse(embeddedDataJson);
+                    appData.regions = embedded.regions || [];
+                    appData.customers = embedded.customers || [];
+                    appData.expenses = embedded.expenses || [];
+                    appData.externalExpenses = embedded.externalExpenses || [];
+                    appData.collections = embedded.collections || [];
+                    console.log('✅ تم تحميل البيانات من داخل الملف');
+                } catch(e) {
+                    console.log('⚠️ لا توجد بيانات محفوظة - ابدأ بجديد');
                 }
             }
         }
 
-        // --- التفاعل واللوحات ---
-        function handleItemClick(element, type, id, rid = null, bid = null) {
-            document.querySelectorAll('.card-item, .unit-box, .card-item-row').forEach(el => el.classList.remove('selected'));
-            element.classList.add('selected');
-            appData.selected = { type, id, rid, bid, ucode: type === 'unit' ? id : null };
-            if(type === 'customer') appData.selected.index = id;
+        function saveData() {
+            // حفظ تلقائي في localStorage
+            localStorage.setItem('sahab_regions', JSON.stringify(appData.regions));
+            localStorage.setItem('sahab_customers', JSON.stringify(appData.customers));
+            localStorage.setItem('sahab_expenses', JSON.stringify(appData.expenses));
+            localStorage.setItem('sahab_external_expenses', JSON.stringify(appData.externalExpenses));
+            localStorage.setItem('sahab_collections', JSON.stringify(appData.collections));
+            
+            // تحديث البيانات المدمجة للملف
+            embeddedDataJson = JSON.stringify({
+                regions: appData.regions,
+                customers: appData.customers,
+                expenses: appData.expenses,
+                externalExpenses: appData.externalExpenses,
+                collections: appData.collections,
+                lastUpdate: new Date().toISOString()
+            }, null, 2);
+            
+            checkNotifications();
+            renderTree();
         }
 
+        function generateSahabUnits(customUnits = null) {
+            if (customUnits) return JSON.parse(JSON.stringify(customUnits));
+            let units = [];
+            // 2 Ground units
+            units.push({ code: 'G1', type: 'أرضي', status: 'available' });
+            units.push({ code: 'G2', type: 'أرضي', status: 'available' });
+            // 8 Typical units (2 per floor for 4 floors)
+            for(let f=1; f<=4; f++) {
+                units.push({ code: `${f}01`, type: 'متكرر', status: 'available' });
+                units.push({ code: `${f}02`, type: 'متكرر', status: 'available' });
+            }
+            // 2 Roof units
+            units.push({ code: 'R1', type: 'رووف', status: 'available' });
+            units.push({ code: 'R2', type: 'رووف', status: 'available' });
+            return units;
+        }
+
+        // --- لوحة التحكم والهيكل ---
         function renderDashboard() {
             appData.currentView = 'dashboard';
-            document.getElementById('current-command-text').innerText = "لوحة تحكم شركة سحاب العقارية";
-            
-            const totalCustomers = appData.customers.length;
-            const totalExpenses = appData.expenses.reduce((sum, ex) => sum + ex.amount, 0);
-            let totalContracts = 0;
-            let totalCollected = 0;
-            let lateCount = 0;
-            let currentMonthCount = 0;
-            const today = new Date();
-            const currentMonth = today.getMonth();
-            const currentYear = today.getFullYear();
-
-            appData.customers.forEach(c => {
-                totalContracts += c.total;
-                c.installments.forEach(inst => {
-                    if(inst.status === 'paid') totalCollected += inst.a;
-                    else {
-                        const d = new Date(inst.d);
-                        if(d < today) lateCount++;
-                        if(d.getMonth() === currentMonth && d.getFullYear() === currentYear) currentMonthCount++;
-                    }
-                });
-            });
+            document.getElementById('current-command-text').innerText = "لوحة التحكم";
+            let totalSold = appData.customers.length;
+            let totalUnits = appData.regions.reduce((s, r) => s + r.buildings.reduce((ss, b) => ss + b.units.length, 0), 0);
+            let totalIncome = 0;
+            appData.customers.forEach(c => c.installments.forEach(inst => { if(inst.status === 'paid') totalIncome += inst.a; }));
 
             let html = `
-                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin-bottom:20px;">
-                    <div class="dashboard-card" onclick="renderCustomerRegistry()"><div class="value">${totalCustomers}</div><div class="label">إجمالي العملاء</div></div>
-                    <div class="dashboard-card" style="border-top-color:var(--gold);" onclick="renderExpenses()"><div class="value">${totalExpenses.toLocaleString()}</div><div class="label">إجمالي المصاريف</div></div>
-                    <div class="dashboard-card" style="border-top-color:var(--blue);" onclick="renderContractReport()"><div class="value">${totalContracts.toLocaleString()}</div><div class="label">إجمالي العقود</div></div>
-                    <div class="dashboard-card" style="border-top-color:var(--sahab-green);" onclick="renderCollectedReport()"><div class="value">${totalCollected.toLocaleString()}</div><div class="label">إجمالي المحصل</div></div>
-                    <div class="dashboard-card" style="border-top-color:#e74c3c;" onclick="executeAction('أقساط متأخرة')"><div class="value">${lateCount}</div><div class="label">أقساط متأخرة</div></div>
-                    <div class="dashboard-card" style="border-top-color:#9b59b6;" onclick="executeAction('أقساط الشهر الحالى')"><div class="value">${currentMonthCount}</div><div class="label">أقساط الشهر الحالي</div></div>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:15px;">
+                    <div class="dashboard-card" onclick="renderRegions()"><div class="value">${appData.regions.length}</div><div class="label">المناطق</div></div>
+                    <div class="dashboard-card" onclick="executeAction('سجل العملاء')"><div class="value">${totalSold}</div><div class="label">الوحدات المباعة</div></div>
+                    <div class="dashboard-card"><div class="value">${totalUnits - totalSold}</div><div class="label">الوحدات المتاحة</div></div>
+                    <div class="dashboard-card" onclick="executeAction('الخزينة')"><div class="value">${totalIncome.toLocaleString()}</div><div class="label">إجمالي التحصيل</div></div>
                 </div>
-                <div style="background:white; padding:20px; border-radius:15px; border:1px solid #ddd;">
-                    <h3 style="margin-top:0; color:var(--sahab-red);">تفاصيل العمليات (نظام الشجرة)</h3>
-                    ${appData.regions.map(r => `
-                        <div class="tree-item">
-                            <div class="tree-header" onclick="toggleTree(this)"><i class="fas fa-folder"></i> المنطقة: ${r.name}</div>
-                            <div class="tree-content active">
-                                ${r.buildings.map(b => `
-                                    <div class="tree-item">
-                                        <div class="tree-header" onclick="toggleTree(this)"><i class="fas fa-building"></i> عمارة: ${b.name}</div>
-                                        <div class="tree-content active">
-                                            ${b.units.map(u => {
-                                                let cust = appData.customers.find(c => c.unit === u.code && c.building === b.name);
-                                                return `<div style="padding:5px; font-size:12px; color:${u.status==='sold'?'red':'green'}; cursor:pointer;" onclick="${u.status==='sold' ? `viewCustomerDetail(${appData.customers.indexOf(cust)})` : `handleItemClick(this, 'unit', '${u.code}', ${r.id}, ${b.id})`}">
-                                                    <i class="fas fa-door-open"></i> وحدة ${u.code} - ${u.status==='sold' ? 'مباعة لـ ' + cust.name : 'متاحة'}
-                                                </div>`;
-                                            }).join('')}
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    `).join('')}
+                <div style="margin-top:20px; background:white; padding:20px; border-radius:15px; border:1px solid #ddd;">
+                    <h3 style="color:var(--sahab-red); margin-top:0;">آخر العمليات</h3>
+                    <table class="res-table">
+                        <thead><tr><th>التاريخ</th><th>البيان</th><th>المبلغ</th></tr></thead>
+                        <tbody>
+                            ${appData.customers.slice(-5).reverse().map(c => `<tr><td>${c.qStart}</td><td>تعاقد جديد: ${c.name}</td><td>${c.total.toLocaleString()}</td></tr>`).join('')}
+                        </tbody>
+                    </table>
                 </div>
             `;
             document.getElementById('main-content').innerHTML = html;
         }
 
-        function toggleTree(el) {
-            el.nextElementSibling.classList.toggle('active');
-            let icon = el.querySelector('i');
-            if(icon.classList.contains('fa-folder')) icon.classList.toggle('fa-folder-open');
+        function renderTree() {
+            let html = '';
+            appData.regions.forEach(r => {
+                html += `
+                    <div class="tree-item">
+                        <div class="tree-header" onclick="toggleTree(this)">
+                            <i class="fas fa-folder"></i> ${r.name}
+                        </div>
+                        <div class="tree-content">
+                            ${r.buildings.map(b => `
+                                <div class="tree-item" style="margin-right:15px;">
+                                    <div class="tree-header" onclick="renderUnits(${r.id}, ${b.id})">
+                                        <i class="fas fa-building"></i> ${b.name}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('tree-container').innerHTML = html;
         }
 
+        function toggleTree(el) {
+            const content = el.nextElementSibling;
+            content.classList.toggle('active');
+            el.querySelector('i').classList.toggle('fa-folder-open');
+        }
+
+        function handleItemClick(el, type, id, rid = null, bid = null) {
+            document.querySelectorAll('.card-item, .card-item-row, .unit-box').forEach(x => x.classList.remove('selected'));
+            el.classList.add('selected');
+            appData.selected = { type, id, rid, bid, ucode: type === 'unit' ? id : null, index: type === 'customer' ? id : null };
+        }
+
+        // --- المناطق والعمارات ---
         function renderRegions() {
             appData.currentView = 'regions';
-            document.getElementById('current-command-text').innerText = "مناطق الشركة";
-            let html = `<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:10px;">`;
-            appData.regions.forEach(reg => {
-                html += `<div class="card-item" onclick="handleItemClick(this, 'region', ${reg.id})" ondblclick="renderBuildings(${reg.id})">
-                            <h3 style="margin:0; color:var(--sahab-red);">${reg.name}</h3>
-                            <small>${reg.buildings.length} عمارة</small>
-                         </div>`;
-            });
-            html += `</div>`;
+            document.getElementById('current-command-text').innerText = "المناطق العقارية";
+            let html = `<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:15px;">
+                ${appData.regions.map(r => `
+                    <div class="card-item" onclick="handleItemClick(this, 'region', ${r.id})" ondblclick="renderBuildings(${r.id})">
+                        <div style="font-weight:900; color:var(--sahab-red);">${r.name}</div>
+                        <div style="font-size:12px; color:#666; margin-top:5px;">عدد العمارات: ${r.buildings.length}</div>
+                    </div>
+                `).join('')}
+            </div>`;
             document.getElementById('main-content').innerHTML = html;
         }
 
         function renderBuildings(rid) {
             appData.currentView = 'buildings';
+            appData.selected.rid = rid;
             const reg = appData.regions.find(r => r.id === rid);
-            document.getElementById('current-command-text').innerText = "عمارات " + reg.name;
-            let html = `<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:10px;">`;
-            reg.buildings.forEach(b => {
-                let soldCount = b.units.filter(u => u.status === 'sold').length;
-                html += `<div class="card-item" style="border-right-color:var(--gold);" onclick="handleItemClick(this, 'building', ${b.id}, ${rid})" ondblclick="viewUnits(${rid}, ${b.id})">
-                            <h3 style="margin:0; font-size:15px;">عمارة ${b.name}</h3>
-                            <small>${b.units.length - soldCount} وحدة متاحة</small>
-                         </div>`;
-            });
-            html += `</div>`;
+            document.getElementById('current-command-text').innerText = "عمارات منطقة: " + reg.name;
+            let html = `<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:15px;">
+                ${reg.buildings.map(b => `
+                    <div class="card-item" onclick="handleItemClick(this, 'building', ${b.id}, ${rid})" ondblclick="renderUnits(${rid}, ${b.id})">
+                        <div style="font-weight:900; color:var(--sahab-red);">${b.name}</div>
+                        <div style="font-size:12px; color:#666; margin-top:5px;">عدد الوحدات: ${b.units.length}</div>
+                    </div>
+                `).join('')}
+            </div>`;
             document.getElementById('main-content').innerHTML = html;
         }
 
-        function viewUnits(rid, bid) {
+        function renderUnits(rid, bid) {
             appData.currentView = 'units';
-            const reg = appData.regions.find(r => r.id === rid);
-            const b = reg.buildings.find(b => b.id === bid);
-            document.getElementById('current-command-text').innerText = "وحدات عمارة " + b.name;
-            let html = `<div style="text-align:center;">
+            appData.selected.rid = rid;
+            appData.selected.bid = bid;
+            const b = appData.regions.find(r => r.id === rid).buildings.find(b => b.id === bid);
+            document.getElementById('current-command-text').innerText = "وحدات عمارة: " + b.name;
+            let html = `<div style="background:#fff; padding:20px; border-radius:20px; border:1px solid #ddd; text-align:center;">
                 <div style="display:flex; gap:10px; justify-content:center; margin-bottom:15px;">${renderUnitBox(b.units[10], rid, bid)} ${renderUnitBox(b.units[11], rid, bid)}</div>
                 <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; max-width:400px; margin:0 auto 15px auto;">${b.units.slice(2, 10).map(u => renderUnitBox(u, rid, bid)).join('')}</div>
                 <div style="display:flex; gap:10px; justify-content:center;">${renderUnitBox(b.units[0], rid, bid)} ${renderUnitBox(b.units[1], rid, bid)}</div>
@@ -518,6 +486,7 @@
             </div>`;
         }
 
+        // --- التعاقدات والأقساط ---
         function renderInstallmentForm(editIndex = null) {
             if (currentUser !== 'admin') return alert("صلاحية Admin فقط");
             let editData = editIndex !== null ? appData.customers[editIndex] : null;
@@ -570,10 +539,37 @@
                         </div>
                         <div><small>تاريخ أول قسط</small><input type="date" id="qStart" class="installment-input" value="${editData ? editData.qStart : new Date().toISOString().split('T')[0]}"></div>
                     </div>
+                    <div style="margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
+                        <span class="field-label">دفعات إضافية / مقدم (اختياري)</span>
+                        <div id="extra-payments-container">
+                            ${editData && editData.extraPayments ? editData.extraPayments.map((ex, i) => `
+                                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr auto; gap:5px; margin-bottom:5px;">
+                                    <input type="date" class="installment-input ex-date" value="${ex.d}">
+                                    <input type="number" class="installment-input ex-amt" value="${ex.a}">
+                                    <input type="text" class="installment-input ex-note" value="${ex.t}">
+                                    <button onclick="this.parentElement.remove()" style="color:red; border:none; background:none; cursor:pointer;"><i class="fas fa-trash"></i></button>
+                                </div>
+                            `).join('') : ''}
+                        </div>
+                        <button onclick="addExtraPaymentRow()" style="width:100%; padding:5px; background:#eee; border:1px dashed #ccc; border-radius:5px; cursor:pointer; font-size:12px;">+ إضافة دفعة/مقدم</button>
+                    </div>
                     <button onclick="processInstallments(${editIndex})" style="width:100%; padding:12px; background:var(--sahab-red); color:white; border:none; border-radius:10px; font-weight:900; cursor:pointer; margin-top:10px;">حفظ التعاقد</button>
                 </div>
             `;
             document.getElementById('main-content').innerHTML = html;
+        }
+
+        function addExtraPaymentRow() {
+            const container = document.getElementById('extra-payments-container');
+            const row = `
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr auto; gap:5px; margin-bottom:5px;">
+                    <input type="date" class="installment-input ex-date">
+                    <input type="number" class="installment-input ex-amt" placeholder="المبلغ">
+                    <input type="text" class="installment-input ex-note" placeholder="البيان (مقدم/دفعة)">
+                    <button onclick="this.parentElement.remove()" style="color:red; border:none; background:none; cursor:pointer;"><i class="fas fa-trash"></i></button>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', row);
         }
 
         function updateBuildingSelect(rid) {
@@ -609,17 +605,37 @@
             let qFreq = parseInt(document.getElementById('qFreq').value);
             let qStart = document.getElementById('qStart').value;
 
+            let extraPayments = [];
+            document.querySelectorAll('#extra-payments-container > div').forEach(div => {
+                let d = div.querySelector('.ex-date').value;
+                let a = parseFloat(div.querySelector('.ex-amt').value) || 0;
+                let t = div.querySelector('.ex-note').value || 'دفعة';
+                if(d && a > 0) extraPayments.push({ d, a, t, status: 'pending' });
+            });
+
             let installments = [];
-            let instAmt = Math.round((total / qCount) * 100) / 100;
+            let extraTotal = extraPayments.reduce((s, p) => s + p.a, 0);
+            let remaining = total - extraTotal;
+            let instAmt = Math.round((remaining / qCount) * 100) / 100;
+
+            extraPayments.forEach(p => installments.push({ ...p }));
             for(let i=0; i<qCount; i++) {
                 let d = new Date(qStart);
                 d.setMonth(d.getMonth() + (i * qFreq));
                 installments.push({ d: d.toISOString().split('T')[0], a: instAmt, t: "قسط دوري", status: 'pending' });
             }
 
-            let customerData = { name, phone, total, qCount, qFreq, qStart, region: regionObj.name, building: buildingObj.name, unit: ucode, installments };
+            installments.sort((a, b) => new Date(a.d) - new Date(b.d));
 
-            if(editIndex !== null) { appData.customers[editIndex] = customerData; } 
+            let customerData = { 
+                name, phone, total, qCount, qFreq, qStart, 
+                region: regionObj.name, building: buildingObj.name, unit: ucode, 
+                installments, extraPayments 
+            };
+
+            if(editIndex !== null) { 
+                appData.customers[editIndex] = customerData; 
+            } 
             else { appData.customers.push(customerData); }
             
             buildingObj.units.find(u => u.code === ucode).status = 'sold';
@@ -630,22 +646,52 @@
         function renderCustomerRegistry() {
             appData.currentView = 'registry';
             document.getElementById('current-command-text').innerText = "سجل العملاء";
-            let html = `<table class="res-table">
+            let html = `
+                <div class="installment-card" style="margin-bottom:10px;">
+                    <input type="text" class="installment-input" placeholder="بحث بالاسم، الهاتف، أو الوحدة..." oninput="filterCustomerRegistry(this.value)">
+                </div>
+                <div id="registry-table-container">
+                    ${generateRegistryTable(appData.customers)}
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function filterCustomerRegistry(val) {
+            let filtered = appData.customers.filter(c => 
+                c.name.includes(val) || 
+                c.phone.includes(val) || 
+                c.unit.includes(val) ||
+                c.building.includes(val)
+            );
+            document.getElementById('registry-table-container').innerHTML = generateRegistryTable(filtered);
+        }
+
+        function generateRegistryTable(data) {
+            return `<table class="res-table">
                 <thead><tr><th>الاسم</th><th>الهاتف</th><th>المنطقة</th><th>العمارة</th><th>الوحدة</th><th>إجمالي العقد</th></tr></thead>
                 <tbody>
-                    ${appData.customers.map((c, i) => `
-                        <tr class="card-item-row" onclick="handleItemClick(this, 'customer', ${i})" ondblclick="viewCustomerDetail(${i})" style="cursor:pointer;">
+                    ${data.map((c, i) => `
+                        <tr class="card-item-row" onclick="handleItemClick(this, 'customer', ${appData.customers.indexOf(c)})" ondblclick="viewCustomerDetail(${appData.customers.indexOf(c)})" style="cursor:pointer;">
                             <td>${c.name}</td><td>${c.phone}</td><td>${c.region}</td><td>${c.building}</td><td>${c.unit}</td><td>${c.total.toLocaleString()}</td>
                         </tr>
                     `).join('')}
                 </tbody>
             </table>`;
-            document.getElementById('main-content').innerHTML = html;
         }
 
         function viewCustomerDetail(index) {
             const c = appData.customers[index];
             document.getElementById('current-command-text').innerText = "تفاصيل العميل: " + c.name;
+            
+            // حساب الإحصائيات
+            let totalPaid = 0;
+            let totalPending = 0;
+            c.installments.forEach(inst => {
+                if (inst.status === 'paid') totalPaid += inst.a;
+                else totalPending += inst.a;
+            });
+            
             let html = `
                 <div class="installment-card">
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
@@ -654,16 +700,31 @@
                         <div><span class="field-label">الوحدة</span><div class="installment-input">${c.building} / ${c.unit}</div></div>
                         <div><span class="field-label">إجمالي العقد</span><div class="installment-input">${c.total.toLocaleString()}</div></div>
                     </div>
+                    ${currentUser === 'admin' ? `
                     <div style="margin-top:15px; display:flex; gap:10px;">
-                        <button onclick="renderInstallmentForm(${index})" style="flex:1; padding:10px; background:var(--gold); border:none; border-radius:8px; font-weight:bold; cursor:pointer;">تعديل البيانات</button>
-                    </div>
+                        <button onclick="renderInstallmentForm(${index})" style="flex:1; padding:10px; background:var(--gold); border:none; border-radius:8px; font-weight:bold; cursor:pointer;"><i class="fas fa-edit"></i> تعديل البيانات</button>
+                    </div>` : ''}
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:10px;">
+                    <div class="dashboard-card" style="border-top-color:var(--sahab-green);"><div class="value">${totalPaid.toLocaleString()}</div><div class="label">المسدد</div></div>
+                    <div class="dashboard-card" style="border-top-color:var(--sahab-red);"><div class="value">${totalPending.toLocaleString()}</div><div class="label">المستحق</div></div>
+                    <div class="dashboard-card" style="border-top-color:var(--blue);"><div class="value">${c.installments.length}</div><div class="label">إجمالي الأقساط</div></div>
                 </div>
                 <div class="installment-card">
-                    <h3 style="color:var(--sahab-red); font-size:16px;">جدول الأقساط</h3>
+                    <h3 style="color:var(--sahab-red); font-size:16px;"><i class="fas fa-list" style="margin-left: 8px;"></i>جدول الأقساط التفصيلي</h3>
                     <table class="res-table">
-                        <thead><tr><th>م</th><th>التاريخ</th><th>المبلغ</th><th>البيان</th><th>الحالة</th></tr></thead>
+                        <thead><tr><th>م</th><th>التاريخ</th><th>المبلغ</th><th>البيان</th><th>الحالة</th><th>إجراء</th></tr></thead>
                         <tbody>
-                            ${c.installments.map((x, i) => `<tr><td>${i+1}</td><td>${x.d}</td><td>${x.a.toLocaleString()}</td><td>${x.t}</td><td style="color:${x.status==='paid'?'green':'red'}">${x.status==='paid'?'محصل':'غير مسدد'}</td></tr>`).join('')}
+                            ${c.installments.map((inst, i) => `
+                                <tr style="${inst.status === 'paid' ? 'background:#e8f5e9;' : 'background:#fff3f3;'}">
+                                    <td>${i+1}</td><td>${inst.d}</td><td style="font-weight:bold; color:${inst.status === 'paid' ? '#27ae60' : '#e74c3c'}">${inst.a.toLocaleString()}</td><td>${inst.t}</td>
+                                    <td style="color:${inst.status === 'paid' ? '#27ae60' : '#e74c3c'}; font-weight: bold;">${inst.status === 'paid' ? '✅ مسدد' : '⏳ معلق'}</td>
+                                    <td>
+                                        <button onclick="editInstallment(${index}, ${i})" style="background:#ff9800; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-size:11px;"><i class="fas fa-edit"></i> تعديل</button>
+                                        <button onclick="deleteInstallment(${index}, ${i})" style="background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-size:11px; margin-left:5px;"><i class="fas fa-trash"></i> حذف</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -671,8 +732,764 @@
             document.getElementById('main-content').innerHTML = html;
         }
 
+        // --- التحصيل المرن ---
+        function renderCollection() {
+            document.getElementById('current-command-text').innerText = "تحصيل قسط";
+            let html = `
+                <div class="installment-card">
+                    <h3 style="color:var(--sahab-red);"><i class="fas fa-search" style="margin-left: 8px;"></i>البحث عن عميل للتحصيل</h3>
+                    <input type="text" class="installment-input" placeholder="🔍 اكتب اسم العميل أو رقم الهاتف أو رقم الوحدة..." oninput="searchCollection(this.value)">
+                </div>
+                <div id="searchResult" style="margin-top:10px;"></div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function searchCollection(val) {
+            if(!val) { document.getElementById('searchResult').innerHTML = ''; return; }
+            let filtered = appData.customers.filter(c => c.name.includes(val) || c.phone.includes(val) || c.unit.includes(val));
+            
+            if(filtered.length === 0) {
+                document.getElementById('searchResult').innerHTML = '<div style="padding:20px; text-align:center; color:#999;">❌ لم يتم العثور على عملاء</div>';
+                return;
+            }
+            
+            document.getElementById('searchResult').innerHTML = filtered.map(c => {
+                let totalPending = c.installments.filter(x => x.status === 'pending').reduce((sum, x) => sum + x.a, 0);
+                return `
+                    <div class="card-item" style="margin-bottom:8px; cursor:pointer; border-left: 5px solid var(--sahab-green);" onclick="renderCollectionForCustomer(${appData.customers.indexOf(c)})">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="color: var(--sahab-red); font-size: 14px;">${c.name}</strong><br>
+                                <small style="color: #666;">📞 ${c.phone} | 🏠 ${c.building} / ${c.unit}</small>
+                            </div>
+                            <div style="text-align: center;">
+                                <small style="color: #999;">المستحق</small><br>
+                                <strong style="color: var(--sahab-red); font-size: 14px;">${totalPending.toLocaleString()}</strong>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCollectionForCustomer(index) {
+            const c = appData.customers[index];
+            document.getElementById('current-command-text').innerText = "تحصيل من: " + c.name;
+            
+            // حساب الأقساط المستحقة فقط
+            let pendingInstallments = c.installments.filter(x => x.status === 'pending');
+            let totalPending = pendingInstallments.reduce((sum, x) => sum + x.a, 0);
+            let totalPaid = c.installments.filter(x => x.status === 'paid').reduce((sum, x) => sum + x.a, 0);
+            
+            let html = `
+                <div class="installment-card">
+                    <h3 style="color:var(--sahab-red);"><i class="fas fa-user-circle" style="margin-left: 8px;"></i>بيانات العميل</h3>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:10px; margin-bottom:10px;">
+                        <div style="padding:10px; background:#f5f5f5; border-radius:5px; text-align:center;">
+                            <small style="color:#666;">الاسم</small><br><strong>${c.name}</strong>
+                        </div>
+                        <div style="padding:10px; background:#f5f5f5; border-radius:5px; text-align:center;">
+                            <small style="color:#666;">الهاتف</small><br><strong>${c.phone}</strong>
+                        </div>
+                        <div style="padding:10px; background:#f5f5f5; border-radius:5px; text-align:center;">
+                            <small style="color:#666;">الوحدة</small><br><strong>${c.building} / ${c.unit}</strong>
+                        </div>
+                        <div style="padding:10px; background:#f5f5f5; border-radius:5px; text-align:center;">
+                            <small style="color:#666;">إجمالي العقد</small><br><strong>${c.total.toLocaleString()}</strong>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:10px;">
+                    <div class="dashboard-card" style="border-top-color:#27ae60;"><div class="value" style="color:#27ae60;">${totalPaid.toLocaleString()}</div><div class="label">المسدد ✅</div></div>
+                    <div class="dashboard-card" style="border-top-color:#e74c3c;"><div class="value" style="color:#e74c3c;">${totalPending.toLocaleString()}</div><div class="label">المستحق ⏳</div></div>
+                    <div class="dashboard-card" style="border-top-color:#3498db;"><div class="value" style="color:#3498db;">${pendingInstallments.length}</div><div class="label">أقساط معلقة</div></div>
+                </div>
+                
+                <div class="installment-card">
+                    <h3 style="color:var(--sahab-red);"><i class="fas fa-coins" style="margin-left: 8px;"></i>تحصيل مبلغ مرن</h3>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div><span class="field-label">المبلغ المدفوع</span><input type="number" id="collectAmt" class="installment-input" placeholder="أدخل المبلغ..." min="0" step="0.01"></div>
+                        <div><span class="field-label">تاريخ التحصيل</span><input type="date" id="collectDate" class="installment-input" value="${new Date().toISOString().split('T')[0]}"></div>
+                    </div>
+                    <button onclick="processFlexibleCollection(${index})" style="width:100%; padding:12px; background:var(--sahab-green); color:white; border:none; border-radius:10px; font-weight:900; cursor:pointer; margin-top:10px; font-size:14px;"><i class="fas fa-check-circle" style="margin-left: 8px;"></i>تأكيد التحصيل</button>
+                </div>
+                
+                <div class="installment-card">
+                    <h3 style="color:var(--sahab-red);"><i class="fas fa-list" style="margin-left: 8px;"></i>الأقساط المستحقة والمسددة</h3>
+                    <table class="res-table">
+                        <thead><tr><th>م</th><th>التاريخ</th><th>المبلغ</th><th>البيان</th><th>الحالة</th><th>إجراء</th></tr></thead>
+                        <tbody>
+                            ${c.installments.map((x, i) => `
+                                <tr style="${x.status === 'paid' ? 'background:#e8f5e9; opacity:0.8;' : 'background:#fff3f3;'}">
+                                    <td><strong>${i+1}</strong></td>
+                                    <td><strong>${x.d}</strong></td>
+                                    <td style="font-weight:bold; color:${x.status === 'paid' ? '#27ae60' : '#e74c3c'}; font-size:12px;">${x.a.toLocaleString()}</td>
+                                    <td style="font-size:11px;">${x.t}</td>
+                                    <td style="color:${x.status === 'paid' ? '#27ae60' : '#e74c3c'}; font-weight: bold;">${x.status === 'paid' ? '✅ مسدد' : '⏳ معلق'}</td>
+                                    <td>
+                                        <button onclick="editInstallment(${appData.customers.indexOf(c)}, ${i})" style="background:#ff9800; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:10px;"><i class="fas fa-edit"></i> تعديل</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function processFlexibleCollection(custIndex) {
+            let amount = parseFloat(document.getElementById('collectAmt').value);
+            let collectDate = document.getElementById('collectDate').value;
+            if(!amount || amount <= 0) return alert("❌ يرجى إدخال مبلغ صحيح");
+            if(!collectDate) return alert("❌ يرجى اختيار التاريخ");
+
+            let c = appData.customers[custIndex];
+            let remainingToPay = amount;
+            let paidCount = 0;
+
+            // تسجيل التحصيل في السجل
+            let collectionRecord = {
+                id: Date.now(),
+                customerIndex: custIndex,
+                customerName: c.name,
+                building: c.building,
+                region: c.region,
+                unit: c.unit,
+                amount: amount,
+                date: collectDate,
+                status: 'completed',
+                createdAt: new Date().toISOString()
+            };
+            
+            appData.collections.push(collectionRecord);
+
+            // معالجة التحصيل
+            for(let i=0; i<c.installments.length; i++) {
+                if(c.installments[i].status === 'pending') {
+                    if(remainingToPay >= c.installments[i].a) {
+                        remainingToPay -= c.installments[i].a;
+                        c.installments[i].status = 'paid';
+                        paidCount++;
+                    } else if (remainingToPay > 0) {
+                        let originalAmt = c.installments[i].a;
+                        c.installments[i].a = remainingToPay;
+                        c.installments[i].status = 'paid';
+                        c.installments.splice(i+1, 0, {
+                            d: c.installments[i].d,
+                            a: originalAmt - remainingToPay,
+                            t: c.installments[i].t + " (متبقي)",
+                            status: 'pending'
+                        });
+                        paidCount++;
+                        remainingToPay = 0;
+                        break;
+                    }
+                }
+            }
+            
+            // حفظ البيانات
+            saveData();
+            
+            // رسالة نجاح مفصلة
+            let message = `✅ تم تسجيل التحصيل بنجاح!\n\n`;
+            message += `📊 التفاصيل:\n`;
+            message += `• المبلغ المدفوع: ${amount.toLocaleString()}\n`;
+            message += `• عدد الأقساط المسددة: ${paidCount}\n`;
+            message += `• التاريخ: ${collectDate}\n`;
+            
+            if(remainingToPay > 0) {
+                message += `• الزيادة: ${remainingToPay.toLocaleString()} (زيادة)\n`;
+            }
+            
+            alert(message);
+            viewCustomerDetail(custIndex);
+        }
+
+        // --- المصروفات والخزينة ---
+        function renderExpenses() {
+            appData.currentView = 'expenses';
+            document.getElementById('current-command-text').innerText = "المصاريف";
+            let html = `
+                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:15px; margin-bottom:20px;">
+                    ${appData.regions.flatMap(r => r.buildings.map(b => `
+                        <div class="building-icon-card" onclick="renderBuildingExpenses('${b.name}')">
+                            <i class="fas fa-building"></i>
+                            <span>${b.name}</span>
+                        </div>
+                    `)).join('')}
+                </div>
+                <div class="installment-card">
+                    <h3 style="color:var(--sahab-red);">إضافة مصروف جديد</h3>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+                        <div><span class="field-label">المبلغ</span><input type="number" id="exAmt" class="installment-input"></div>
+                        <div><span class="field-label">العمارة</span>
+                            <select id="exBld" class="installment-input">
+                                ${appData.regions.flatMap(r => r.buildings.map(b => `<option value="${b.name}">${b.name}</option>`)).join('')}
+                            </select>
+                        </div>
+                        <div><span class="field-label">البيان</span><input type="text" id="exNote" class="installment-input" placeholder="مثلاً: كهرباء، سباكة..."></div>
+                    </div>
+                    <button onclick="addExpense()" style="width:100%; padding:10px; background:var(--sahab-red); color:white; border:none; border-radius:10px; margin-top:10px; cursor:pointer;">إضافة مصروف</button>
+                </div>
+                <div id="expenses-list-container">
+                    ${generateExpensesTable(appData.expenses)}
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function renderBuildingExpenses(bName) {
+            let filtered = appData.expenses.filter(e => e.building === bName);
+            document.getElementById('current-command-text').innerText = "مصروفات عمارة: " + bName;
+            document.getElementById('main-content').innerHTML = `
+                <button onclick="renderExpenses()" style="margin-bottom:10px; padding:5px 15px; background:#eee; border:1px solid #ccc; border-radius:5px; cursor:pointer;">العودة لكافة المصروفات</button>
+                ${generateExpensesTable(filtered)}
+            `;
+        }
+
+        function generateExpensesTable(data) {
+            return `
+                <div class="installment-card">
+                    <table class="res-table">
+                        <thead><tr><th>التاريخ</th><th>العمارة</th><th>البيان</th><th>المبلغ</th></tr></thead>
+                        <tbody>
+                            ${data.map(e => `<tr><td>${e.date}</td><td>${e.building}</td><td>${e.note}</td><td>${e.amount.toLocaleString()}</td></tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function addExpense() {
+            const amount = parseFloat(document.getElementById('exAmt').value);
+            const building = document.getElementById('exBld').value;
+            const note = document.getElementById('exNote').value || 'مصروف عام';
+            if(!amount) return alert("أدخل المبلغ");
+            appData.expenses.push({ date: new Date().toISOString().split('T')[0], amount, building, note });
+            saveData();
+            renderExpenses();
+        }
+
+        function renderTreasury() {
+            document.getElementById('current-command-text').innerText = "الخزينة والتقارير المالية";
+            let totalIncome = 0;
+            appData.customers.forEach(c => c.installments.forEach(inst => { if(inst.status === 'paid') totalIncome += inst.a; }));
+            let totalOut = appData.expenses.reduce((s, e) => s + e.amount, 0);
+            let balance = totalIncome - totalOut;
+            
+            let html = `
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:20px;">
+                    <div class="dashboard-card" style="border-top-color:var(--sahab-green); cursor:pointer; transition:0.3s;" onclick="renderTreasuryDetails('income')" ondblclick="renderTreasuryDetails('income')" title="اضغط لرؤية التفاصيل">
+                        <div class="value" style="color:var(--sahab-green);">📊 ${totalIncome.toLocaleString()}</div>
+                        <div class="label">إجمالي المحصل</div>
+                    </div>
+                    <div class="dashboard-card" style="border-top-color:var(--sahab-red); cursor:pointer; transition:0.3s;" onclick="renderExpenses()" title="اضغط لإدارة المصروفات">
+                        <div class="value" style="color:var(--sahab-red);">💸 ${totalOut.toLocaleString()}</div>
+                        <div class="label">إجمالي المصروفات</div>
+                    </div>
+                    <div class="dashboard-card" style="border-top-color:var(--blue);">
+                        <div class="value" style="color:var(--blue);">💰 ${balance.toLocaleString()}</div>
+                        <div class="label">صافي الخزينة</div>
+                    </div>
+                </div>
+                <div class="installment-card">
+                    <h3 style="color:var(--sahab-red);"><i class="fas fa-chart-bar" style="margin-left: 8px;"></i>ملخص التقارير المالية</h3>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+                        <div style="background:#f0f8ff; padding:15px; border-radius:10px; border-left:4px solid #3498db;">
+                            <small style="color:#666;">عدد العملاء</small><br>
+                            <strong style="font-size:18px; color:#3498db;">${appData.customers.length}</strong>
+                        </div>
+                        <div style="background:#f0fff0; padding:15px; border-radius:10px; border-left:4px solid var(--sahab-green);">
+                            <small style="color:#666;">الأقساط المسددة</small><br>
+                            <strong style="font-size:18px; color:var(--sahab-green);">${appData.customers.reduce((sum, c) => sum + c.installments.filter(x => x.status === 'paid').length, 0)}</strong>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function renderTreasuryDetails(type) {
+            if(type === 'income') {
+                document.getElementById('current-command-text').innerText = "تفاصيل المحصلات حسب العمارة";
+                
+                // حساب المحصل من كل عمارة
+                let buildingIncome = {};
+                appData.customers.forEach(c => {
+                    const key = `${c.building} (${c.region})`;
+                    if(!buildingIncome[key]) buildingIncome[key] = { income: 0, customers: [] };
+                    let custIncome = c.installments.filter(x => x.status === 'paid').reduce((sum, x) => sum + x.a, 0);
+                    buildingIncome[key].income += custIncome;
+                    buildingIncome[key].customers.push(c);
+                });
+                
+                let totalIncome = Object.values(buildingIncome).reduce((sum, b) => sum + b.income, 0);
+                
+                let html = `
+                    <div class="installment-card">
+                        <h3 style="color:var(--sahab-red);"><i class="fas fa-building" style="margin-left: 8px;"></i>المحصول من كل عمارة</h3>
+                        <p style="color:#666; font-size:12px; margin:5px 0;">⏺️ انقر مرتين (Double Click) على أي عمارة لتسجيل تحصيل جديد</p>
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap:10px;">
+                        ${Object.entries(buildingIncome).map(([building, data]) => {
+                            let percentage = (data.income / totalIncome * 100).toFixed(1);
+                            return `
+                                <div class="building-icon-card" style="border-bottom: 5px solid var(--sahab-green); cursor:pointer; transition:0.3s;" onclick="renderBuildingCollectionDetails('${building}')" ondblclick="renderBuildingCollectionForm('${building}')">
+                                    <i class="fas fa-building" style="font-size: 40px; color: var(--sahab-green); margin-bottom: 10px;"></i>
+                                    <strong style="font-size:14px; color:var(--sahab-red);">${building}</strong><br>
+                                    <div style="margin-top:8px; font-size:12px; background:#e8f5e9; padding:8px; border-radius:5px; width:100%;">
+                                        <strong style="color:var(--sahab-green); font-size:14px;">${data.income.toLocaleString()}</strong><br>
+                                        <small style="color:#666;">${percentage}% من الإجمالي</small>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+                
+                document.getElementById('main-content').innerHTML = html;
+            }
+        }
+
+        function renderBuildingCollectionDetails(building) {
+            document.getElementById('current-command-text').innerText = `تفاصيل المحصول: ${building}`;
+            
+            // جلب عملاء هذه العمارة والمحصول منهم
+            let buildingCustomers = appData.customers.filter(c => `${c.building} (${c.region})` === building);
+            
+            let html = `
+                <div class="installment-card">
+                    <h3 style="color:var(--sahab-red);"><i class="fas fa-building" style="margin-left: 8px;"></i>${building}</h3>
+                    <p style="color:#666; font-size:12px;">اضغط مرتين على أي عميل لتسجيل تحصيل جديد منه</p>
+                </div>
+                <div class="installment-card">
+                    <table class="res-table">
+                        <thead>
+                            <tr>
+                                <th>اسم العميل</th>
+                                <th>الوحدة</th>
+                                <th>المحصل</th>
+                                <th>المستحق</th>
+                                <th>الإجمالي</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${buildingCustomers.map((c, i) => {
+                                let paid = c.installments.filter(x => x.status === 'paid').reduce((sum, x) => sum + x.a, 0);
+                                let pending = c.installments.filter(x => x.status === 'pending').reduce((sum, x) => sum + x.a, 0);
+                                return `
+                                    <tr style="cursor:pointer; transition:0.2s;" ondblclick="renderCollectionForCustomer(${appData.customers.indexOf(c)})" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
+                                        <td style="font-weight:bold;">${c.name}</td>
+                                        <td>${c.unit}</td>
+                                        <td style="color:var(--sahab-green); font-weight:bold;">${paid.toLocaleString()}</td>
+                                        <td style="color:var(--sahab-red); font-weight:bold;">${pending.toLocaleString()}</td>
+                                        <td>${c.total.toLocaleString()}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function renderBuildingCollectionForm(building) {
+            document.getElementById('current-command-text').innerText = `تحصيل من عمارة: ${building}`;
+            
+            let buildingCustomers = appData.customers.filter(c => `${c.building} (${c.region})` === building);
+            
+            let html = `
+                <div class="installment-card">
+                    <h3 style="color:var(--sahab-red);"><i class="fas fa-cash-register" style="margin-left: 8px;"></i>تسجيل تحصيل من عمارة ${building}</h3>
+                    <p style="color:#666; font-size:12px;">اختر العميل من القائمة ثم أدخل المبلغ</p>
+                </div>
+                <div class="installment-card">
+                    <span class="field-label">اختر العميل</span>
+                    <select id="collectionCustomer" class="installment-input" onchange="loadCustomerForCollection()">
+                        <option value="">-- اختر عميل --</option>
+                        ${buildingCustomers.map((c, i) => 
+                            `<option value="${appData.customers.indexOf(c)}">${c.name} - ${c.unit} (${c.phone})</option>`
+                        ).join('')}
+                    </select>
+                </div>
+                <div id="customerCollectionForm"></div>
+            `;
+            
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function loadCustomerForCollection() {
+            const custIndex = document.getElementById('collectionCustomer').value;
+            if(!custIndex) return;
+            renderCollectionForCustomer(parseInt(custIndex));
+        }
+
+        function editInstallment(custIndex, instIndex) {
+            const c = appData.customers[custIndex];
+            const inst = c.installments[instIndex];
+            
+            let html = `
+                <div class="installment-card">
+                    <h3 style="color:var(--sahab-red);"><i class="fas fa-edit" style="margin-left: 8px;"></i>تعديل قسط</h3>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div>
+                            <span class="field-label">اسم العميل</span>
+                            <div class="installment-input" style="background:#f5f5f5;">${c.name}</div>
+                        </div>
+                        <div>
+                            <span class="field-label">الوحدة</span>
+                            <div class="installment-input" style="background:#f5f5f5;">${c.building} / ${c.unit}</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
+                        <span class="field-label">التاريخ</span>
+                        <input type="date" id="editDate" class="installment-input" value="${inst.d}">
+                    </div>
+                    <div style="margin-top:10px;">
+                        <span class="field-label">المبلغ</span>
+                        <input type="number" id="editAmount" class="installment-input" value="${inst.a}" step="0.01" min="0">
+                    </div>
+                    <div style="margin-top:10px;">
+                        <span class="field-label">البيان</span>
+                        <input type="text" id="editNote" class="installment-input" value="${inst.t}">
+                    </div>
+                    <div style="margin-top:10px;">
+                        <span class="field-label">الحالة</span>
+                        <select id="editStatus" class="installment-input">
+                            <option value="paid" ${inst.status === 'paid' ? 'selected' : ''}>✅ مسدد</option>
+                            <option value="pending" ${inst.status === 'pending' ? 'selected' : ''}>⏳ معلق</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:15px;">
+                        <button onclick="saveEditInstallment(${custIndex}, ${instIndex})" style="flex:1; padding:10px; background:var(--sahab-green); color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;"><i class="fas fa-save"></i> حفظ التعديل</button>
+                        <button onclick="viewCustomerDetail(${custIndex})" style="flex:1; padding:10px; background:#ccc; color:#333; border:none; border-radius:8px; font-weight:bold; cursor:pointer;"><i class="fas fa-times"></i> إلغاء</button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('current-command-text').innerText = `تعديل قسط - ${c.name}`;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function saveEditInstallment(custIndex, instIndex) {
+            const c = appData.customers[custIndex];
+            const newDate = document.getElementById('editDate').value;
+            const newAmount = parseFloat(document.getElementById('editAmount').value);
+            const newNote = document.getElementById('editNote').value;
+            const newStatus = document.getElementById('editStatus').value;
+            
+            if(!newDate || !newAmount || newAmount <= 0) {
+                return alert('❌ يرجى إدخال بيانات صحيحة');
+            }
+            
+            // حفظ البيانات القديمة
+            const oldStatus = c.installments[instIndex].status;
+            const oldAmount = c.installments[instIndex].a;
+            
+            // تحديث البيانات
+            c.installments[instIndex] = {
+                d: newDate,
+                a: newAmount,
+                t: newNote,
+                status: newStatus
+            };
+            
+            saveData();
+            alert(`✅ تم تحديث القسط بنجاح!\n\nالتغييرات:\n• التاريخ: ${newDate}\n• المبلغ: ${newAmount.toLocaleString()}\n• الحالة: ${newStatus === 'paid' ? '✅ مسدد' : '⏳ معلق'}`);
+            viewCustomerDetail(custIndex);
+        }
+
+        function deleteInstallment(custIndex, instIndex) {
+            const c = appData.customers[custIndex];
+            const inst = c.installments[instIndex];
+            
+            if(!confirm(`⚠️ هل تأكد من حذف هذا القسط؟\n\nالمبلغ: ${inst.a.toLocaleString()}\nالتاريخ: ${inst.d}\nالحالة: ${inst.status === 'paid' ? '✅ مسدد' : '⏳ معلق'}`)) {
+                return;
+            }
+            
+            c.installments.splice(instIndex, 1);
+            saveData();
+            alert('✅ تم حذف القسط بنجاح');
+            viewCustomerDetail(custIndex);
+        }
+
+        function renderCollectionsManager() {
+            appData.currentView = 'collections';
+            document.getElementById('current-command-text').innerText = "إدارة التحصيلات حسب العمارة";
+            
+            // حساب التحصيلات من كل عمارة
+            let buildingCollections = {};
+            appData.collections.forEach(col => {
+                const key = `${col.building} (${col.region})`;
+                if(!buildingCollections[key]) {
+                    buildingCollections[key] = { 
+                        total: 0, 
+                        count: 0, 
+                        lastCollection: '',
+                        collections: [] 
+                    };
+                }
+                buildingCollections[key].total += col.amount;
+                buildingCollections[key].count += 1;
+                buildingCollections[key].collections.push(col);
+                buildingCollections[key].lastCollection = new Date(col.date) > new Date(buildingCollections[key].lastCollection) ? col.date : buildingCollections[key].lastCollection;
+            });
+            
+            let totalCollections = appData.collections.reduce((sum, c) => sum + c.amount, 0);
+            
+            let html = `
+                <div class="installment-card">
+                    <h3 style="color:var(--sahab-red);"><i class="fas fa-chart-pie" style="margin-left: 8px;"></i>ملخص التحصيلات حسب العمارة</h3>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-top:10px;">
+                        <div style="background:#f0fff0; padding:15px; border-radius:10px; border-left:4px solid var(--sahab-green);">
+                            <small style="color:#666;">إجمالي التحصيلات</small><br>
+                            <strong style="font-size:18px; color:var(--sahab-green);">${totalCollections.toLocaleString()}</strong>
+                        </div>
+                        <div style="background:#f0f8ff; padding:15px; border-radius:10px; border-left:4px solid #3498db;">
+                            <small style="color:#666;">عدد العمارات</small><br>
+                            <strong style="font-size:18px; color:#3498db;">${Object.keys(buildingCollections).length}</strong>
+                        </div>
+                        <div style="background:#fff8f0; padding:15px; border-radius:10px; border-left:4px solid #ff9800;">
+                            <small style="color:#666;">عدد التحصيلات</small><br>
+                            <strong style="font-size:18px; color:#ff9800;">${appData.collections.length}</strong>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="installment-card">
+                    <h3 style="color:var(--sahab-red);"><i class="fas fa-building" style="margin-left: 8px;"></i>التحصيلات من كل عمارة</h3>
+                    <p style="color:#666; font-size:12px; margin:5px 0;">⏺️ اضغط على أي عمارة لرؤية التفاصيل | 📝 Double Click لإضافة تحصيل جديد</p>
+                </div>
+                
+                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:10px;">
+                    ${Object.entries(buildingCollections).length === 0 ? 
+                        '<div style="grid-column: 1/-1; padding:30px; text-align:center; color:#999;">لا توجد تحصيلات حتى الآن</div>' :
+                        Object.entries(buildingCollections).map(([building, data]) => {
+                            let percentage = (data.total / totalCollections * 100).toFixed(1);
+                            return `
+                                <div class="building-icon-card" style="border-bottom: 5px solid var(--sahab-green); cursor:pointer; transition:0.3s;" onclick="renderBuildingCollectionsDetails('${building}')" title="اضغط لرؤية التفاصيل">
+                                    <i class="fas fa-building" style="font-size: 40px; color: var(--sahab-green); margin-bottom: 10px;"></i>
+                                    <strong style="font-size:14px; color:var(--sahab-red);">${building}</strong><br>
+                                    <div style="margin-top:8px; font-size:12px; background:#e8f5e9; padding:8px; border-radius:5px; width:100%;">
+                                        <strong style="color:var(--sahab-green); font-size:14px;">${data.total.toLocaleString()}</strong><br>
+                                        <small style="color:#666;">${data.count} تحصيل (${percentage}%)</small><br>
+                                        <small style="color:#999; font-size:10px;">آخر: ${data.lastCollection}</small>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')
+                    }
+                </div>
+            `;
+            
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function renderBuildingCollectionsDetails(building) {
+            document.getElementById('current-command-text').innerText = `تفاصيل التحصيلات: ${building}`;
+            
+            let buildingCollections = appData.collections.filter(c => `${c.building} (${c.region})` === building);
+            buildingCollections.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            let totalAmount = buildingCollections.reduce((sum, c) => sum + c.amount, 0);
+            
+            let html = `
+                <div class="installment-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <h3 style="color:var(--sahab-red); margin:0;"><i class="fas fa-building" style="margin-left: 8px;"></i>${building}</h3>
+                            <small style="color:#666;">إجمالي التحصيلات: <strong style="color:var(--sahab-green);">${totalAmount.toLocaleString()}</strong></small>
+                        </div>
+                        <button onclick="renderCollectionsManager()" style="padding:8px 15px; background:#ddd; border:none; border-radius:5px; cursor:pointer;"><i class="fas fa-arrow-left"></i> رجوع</button>
+                    </div>
+                </div>
+                
+                <div class="installment-card">
+                    <h3 style="color:var(--sahab-red);">📋 قائمة التحصيلات</h3>
+                    <table class="res-table">
+                        <thead>
+                            <tr>
+                                <th>م</th>
+                                <th>العميل</th>
+                                <th>الوحدة</th>
+                                <th>المبلغ</th>
+                                <th>التاريخ</th>
+                                <th>الإجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${buildingCollections.map((col, idx) => `
+                                <tr style="background:#f9f9f9;">
+                                    <td><strong>${idx+1}</strong></td>
+                                    <td style="font-weight:bold; color:var(--sahab-red);">${col.customerName}</td>
+                                    <td>${col.unit}</td>
+                                    <td style="font-weight:bold; color:var(--sahab-green); font-size:13px;">${col.amount.toLocaleString()}</td>
+                                    <td>${col.date}</td>
+                                    <td style="display:flex; gap:5px;">
+                                        <button onclick="editCollection(${col.id})" style="background:#ff9800; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-size:11px;"><i class="fas fa-edit"></i> تعديل</button>
+                                        <button onclick="deleteCollection(${col.id})" style="background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-size:11px;"><i class="fas fa-trash"></i> حذف</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function editCollection(collectionId) {
+            let collection = appData.collections.find(c => c.id === collectionId);
+            if(!collection) return alert('❌ لم يتم العثور على التحصيل');
+            
+            let html = `
+                <div class="installment-card">
+                    <h3 style="color:var(--sahab-red);"><i class="fas fa-edit" style="margin-left: 8px;"></i>تعديل التحصيل</h3>
+                    
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div>
+                            <span class="field-label">اسم العميل</span>
+                            <div class="installment-input" style="background:#f5f5f5;">${collection.customerName}</div>
+                        </div>
+                        <div>
+                            <span class="field-label">الوحدة</span>
+                            <div class="installment-input" style="background:#f5f5f5;">${collection.building} / ${collection.unit}</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
+                        <span class="field-label">المبلغ المدفوع</span>
+                        <input type="number" id="editColAmount" class="installment-input" value="${collection.amount}" step="0.01" min="0">
+                    </div>
+                    
+                    <div style="margin-top:10px;">
+                        <span class="field-label">تاريخ التحصيل</span>
+                        <input type="date" id="editColDate" class="installment-input" value="${collection.date}">
+                    </div>
+                    
+                    <div style="display:flex; gap:10px; margin-top:15px;">
+                        <button onclick="saveEditCollection(${collectionId})" style="flex:1; padding:10px; background:var(--sahab-green); color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;"><i class="fas fa-save"></i> حفظ التعديل</button>
+                        <button onclick="renderCollectionsManager()" style="flex:1; padding:10px; background:#ccc; color:#333; border:none; border-radius:8px; font-weight:bold; cursor:pointer;"><i class="fas fa-times"></i> إلغاء</button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('current-command-text').innerText = `تعديل تحصيل - ${collection.customerName}`;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function saveEditCollection(collectionId) {
+            let newAmount = parseFloat(document.getElementById('editColAmount').value);
+            let newDate = document.getElementById('editColDate').value;
+            
+            if(!newAmount || newAmount <= 0) {
+                return alert('❌ يرجى إدخال مبلغ صحيح');
+            }
+            if(!newDate) {
+                return alert('❌ يرجى اختيار التاريخ');
+            }
+            
+            let collection = appData.collections.find(c => c.id === collectionId);
+            let oldAmount = collection.amount;
+            
+            collection.amount = newAmount;
+            collection.date = newDate;
+            
+            saveData();
+            alert(`✅ تم تحديث التحصيل بنجاح!\n\nالتغييرات:\n• المبلغ: ${oldAmount.toLocaleString()} → ${newAmount.toLocaleString()}\n• التاريخ: ${newDate}`);
+            renderCollectionsManager();
+        }
+
+        function deleteCollection(collectionId) {
+            let collection = appData.collections.find(c => c.id === collectionId);
+            if(!collection) return alert('❌ لم يتم العثور على التحصيل');
+            
+            if(!confirm(`⚠️ هل تأكد من حذف هذا التحصيل؟\n\nالعميل: ${collection.customerName}\nالمبلغ: ${collection.amount.toLocaleString()}\nالتاريخ: ${collection.date}`)) {
+                return;
+            }
+            
+            appData.collections = appData.collections.filter(c => c.id !== collectionId);
+            saveData();
+            alert('✅ تم حذف التحصيل بنجاح');
+            renderCollectionsManager();
+        }
+
+        // --- المصروفات الخارجية ---
+        function renderExternalExpenses() {
+            appData.currentView = 'external';
+            document.getElementById('current-command-text').innerText = "المصروفات الخارجية (المحفظة الشخصية)";
+            let html = `
+                <div class="installment-card">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+                        <div><span class="field-label">التاريخ</span><input type="date" id="ext-date" class="installment-input" value="${new Date().toISOString().split('T')[0]}"></div>
+                        <div><span class="field-label">البيان</span><input type="text" id="ext-desc" class="installment-input"></div>
+                        <div><span class="field-label">المبلغ</span><input type="number" id="ext-amount" class="installment-input"></div>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <button onclick="addExternalRow()" style="flex:2; padding:10px; background:var(--sahab-red); color:white; border:none; border-radius:10px; cursor:pointer;">إضافة مصروف</button>
+                        <button onclick="exportExternalToExcel()" style="flex:1; padding:10px; background:var(--sahab-green); color:white; border:none; border-radius:10px; cursor:pointer;"><i class="fas fa-file-excel"></i> تصدير إكسيل</button>
+                    </div>
+                </div>
+                <div class="installment-card">
+                    <table class="res-table">
+                        <thead><tr><th>التاريخ</th><th>البيان</th><th>المبلغ</th><th>إجراء</th></tr></thead>
+                        <tbody id="ext-table-body">
+                            ${appData.externalExpenses.map((ex, i) => `
+                                <tr>
+                                    <td>${ex.d}</td><td>${ex.t}</td><td>${ex.a.toLocaleString()}</td>
+                                    <td><button onclick="deleteExternalExpense(${i})" style="color:red; border:none; background:none; cursor:pointer;"><i class="fas fa-trash"></i></button></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function addExternalRow() {
+            const d = document.getElementById('ext-date').value;
+            const t = document.getElementById('ext-desc').value;
+            const a = parseFloat(document.getElementById('ext-amount').value);
+            if(d && t && a) {
+                appData.externalExpenses.unshift({ d, t, a });
+                saveData();
+                renderExternalExpenses();
+            } else {
+                alert("يرجى إكمال البيانات");
+            }
+        }
+
+        function deleteExternalExpense(index) {
+            if(confirm("حذف هذا المصروف؟")) {
+                appData.externalExpenses.splice(index, 1);
+                saveData();
+                renderExternalExpenses();
+            }
+        }
+
+        async function exportExternalToExcel() {
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('المصروفات الخارجية');
+            worksheet.columns = [
+                { header: 'التاريخ', key: 'd', width: 15 },
+                { header: 'البيان', key: 't', width: 30 },
+                { header: 'المبلغ', key: 'a', width: 15 }
+            ];
+            appData.externalExpenses.forEach(ex => worksheet.addRow(ex));
+            const buffer = await workbook.xlsx.writeBuffer();
+            saveAs(new Blob([buffer]), `مصروفات_خارجية_${new Date().getMonth()+1}_${new Date().getFullYear()}.xlsx`);
+        }
+
+        // --- وظائف عامة ---
         function executeAction(name) {
-            if (currentUser !== 'admin' && ['إضافة', 'تعديل', 'حذف', 'تحصيل قسط', 'إضافة عميل'].includes(name)) {
+            if (currentUser !== 'admin' && ['إضافة', 'تعديل', 'حذف', 'تحصيل قسط', 'إضافة عميل', 'إضافة منطقة', 'إضافة عمارة'].includes(name)) {
                 return alert("عذراً، لا تمتلك صلاحية لهذا الإجراء (للمسؤول فقط)");
             }
             if (name === 'إضافة') {
@@ -706,6 +1523,26 @@
             }
         }
 
+        function addRegion() {
+            let name = prompt("أدخل اسم المنطقة الجديدة:");
+            if(name) { appData.regions.push({ id: Date.now(), name, buildings: [] }); saveData(); renderRegions(); }
+        }
+
+        function addBuilding() {
+            let rid = appData.selected.rid;
+            if(!rid && appData.regions.length > 0) {
+                let choice = prompt("اختر رقم المنطقة:\n" + appData.regions.map((r, i) => `${i+1}- ${r.name}`).join('\n'));
+                if(choice && appData.regions[choice-1]) rid = appData.regions[choice-1].id;
+            }
+            if(!rid) return alert("حدد المنطقة أولاً");
+            let name = prompt("أدخل رقم أو اسم العمارة الجديدة:");
+            if(!name) return;
+            const reg = appData.regions.find(r => r.id === rid);
+            reg.buildings.push({ id: Date.now(), name, units: generateSahabUnits() });
+            saveData();
+            renderBuildings(rid);
+        }
+
         function editRegion(id) {
             let reg = appData.regions.find(r => r.id === id);
             let newName = prompt("تعديل اسم المنطقة:", reg.name);
@@ -719,6 +1556,10 @@
             if (newName) { bld.name = newName; saveData(); renderBuildings(rid); }
         }
 
+        function deleteRegion(id) {
+            if(confirm("هل أنت متأكد؟")) { appData.regions = appData.regions.filter(r => r.id !== id); saveData(); renderRegions(); }
+        }
+
         function deleteBuilding(rid, bid) {
             if (confirm("هل أنت متأكد من حذف هذه العمارة؟")) {
                 let reg = appData.regions.find(r => r.id === rid);
@@ -728,137 +1569,16 @@
             }
         }
 
-        function renderTreasury() {
-            document.getElementById('current-command-text').innerText = "الخزينة";
-            let totalIncome = 0;
-            appData.customers.forEach(c => c.installments.forEach(inst => { if(inst.status === 'paid') totalIncome += inst.a; }));
-            let totalOut = appData.expenses.reduce((s, e) => s + e.amount, 0);
-            let html = `
-                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:20px;">
-                    <div class="dashboard-card" style="border-top-color:var(--sahab-green);"><div class="value">${totalIncome.toLocaleString()}</div><div class="label">إجمالي المحصل</div></div>
-                    <div class="dashboard-card" style="border-top-color:var(--sahab-red);"><div class="value">${totalOut.toLocaleString()}</div><div class="label">إجمالي المصروفات</div></div>
-                    <div class="dashboard-card" style="border-top-color:var(--blue);"><div class="value">${(totalIncome - totalOut).toLocaleString()}</div><div class="label">صافي الخزينة</div></div>
-                </div>
-            `;
-            document.getElementById('main-content').innerHTML = html;
-        }
-
-        function addRegion() {
-            let name = prompt("أدخل اسم المنطقة الجديدة:");
-            if(name) { appData.regions.push({ id: Date.now(), name, buildings: [] }); saveData(); renderRegions(); }
-        }
-
-        function deleteRegion(id) {
-            if(confirm("هل أنت متأكد؟")) { appData.regions = appData.regions.filter(r => r.id !== id); saveData(); renderRegions(); }
-        }
-
-        function addBuilding() {
-            let rid = appData.selected.rid;
-            if(!rid && appData.regions.length > 0) {
-                let choice = prompt("اختر رقم المنطقة:\n" + appData.regions.map((r, i) => `${i+1}- ${r.name}`).join('\n'));
-                if(choice && appData.regions[choice-1]) rid = appData.regions[choice-1].id;
-            }
-            if(!rid) return alert("حدد المنطقة أولاً");
-            
-            let name = prompt("أدخل رقم أو اسم العمارة الجديدة:");
-            if(!name) return;
-
-            let unitsToCopy = null;
-            let allBuildings = appData.regions.flatMap(r => r.buildings);
-            if (allBuildings.length > 0) {
-                let copyChoice = confirm("هل تريد نسخ هيكل الوحدات من عمارة موجودة؟");
-                if (copyChoice) {
-                    let bList = allBuildings.map((b, i) => `${i+1}- ${b.name}`).join('\n');
-                    let bIdx = prompt("اختر العمارة للنسخ منها:\n" + bList);
-                    if (bIdx && allBuildings[bIdx-1]) {
-                        unitsToCopy = allBuildings[bIdx-1].units.map(u => ({ ...u, status: 'available' }));
-                    }
-                }
-            }
-
-            const reg = appData.regions.find(r => r.id === rid);
-            reg.buildings.push({ id: Date.now(), name, units: generateSahabUnits(unitsToCopy) });
-            saveData();
-            renderBuildings(rid);
-        }
-
-        function renderExpenses() {
-            appData.currentView = 'expenses';
-            document.getElementById('current-command-text').innerText = "المصاريف";
-            let html = `
-                <div class="installment-card">
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                        <div><span class="field-label">المبلغ</span><input type="number" id="exAmt" class="installment-input"></div>
-                        <div><span class="field-label">العمارة</span>
-                            <select id="exBld" class="installment-input">
-                                ${appData.regions.flatMap(r => r.buildings.map(b => `<option value="${b.name}">${b.name}</option>`)).join('')}
-                            </select>
-                        </div>
-                    </div>
-                    <button onclick="addExpense()" style="width:100%; padding:10px; background:var(--sahab-red); color:white; border:none; border-radius:10px; margin-top:10px; cursor:pointer;">إضافة مصروف</button>
-                </div>
-            `;
-            document.getElementById('main-content').innerHTML = html;
-        }
-
-        function addExpense() {
-            const amount = parseFloat(document.getElementById('exAmt').value);
-            const building = document.getElementById('exBld').value;
-            if(!amount) return alert("أدخل المبلغ");
-            appData.expenses.push({ date: new Date().toISOString().split('T')[0], amount, building, note: 'مصروف عام' });
-            saveData();
-            renderExpenses();
-        }
-
-        function renderCollection() {
-            document.getElementById('current-command-text').innerText = "تحصيل قسط";
-            let html = `
-                <div class="installment-card">
-                    <span class="field-label">البحث عن عميل للتحصيل</span>
-                    <input type="text" class="installment-input" placeholder="اكتب الاسم أو الهاتف..." oninput="searchCollection(this.value)">
-                </div>
-                <div id="searchResult"></div>
-            `;
-            document.getElementById('main-content').innerHTML = html;
-        }
-
-        function searchCollection(val) {
-            if(!val) { document.getElementById('searchResult').innerHTML = ''; return; }
-            let filtered = appData.customers.filter(c => c.name.includes(val) || c.phone.includes(val));
-            document.getElementById('searchResult').innerHTML = filtered.map(c => `
-                <div class="card-item" style="margin-bottom:5px;" onclick="renderCollectionForCustomer(${appData.customers.indexOf(c)})">
-                    ${c.name} - ${c.unit}
-                </div>
-            `).join('');
-        }
-
-        function renderCollectionForCustomer(index) {
-            const c = appData.customers[index];
-            document.getElementById('current-command-text').innerText = "تحصيل من: " + c.name;
-            let html = `
-                <div class="installment-card">
-                    <h3 style="color:var(--sahab-red);">الأقساط المستحقة</h3>
-                    <table class="res-table">
-                        <thead><tr><th>م</th><th>التاريخ</th><th>المبلغ</th><th>إجراء</th></tr></thead>
-                        <tbody>
-                            ${c.installments.map((x, i) => x.status === 'pending' ? `
-                                <tr><td>${i+1}</td><td>${x.d}</td><td>${x.a.toLocaleString()}</td>
-                                    <td><button onclick="collectInstallment(${index}, ${i})" style="background:var(--sahab-green); color:white; border:none; padding:5px; border-radius:5px; cursor:pointer;">تحصيل</button></td>
-                                </tr>
-                            ` : '').join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            document.getElementById('main-content').innerHTML = html;
-        }
-
-        function collectInstallment(custIndex, instIndex) {
-            if(confirm("تأكيد تحصيل هذا المبلغ؟")) {
-                appData.customers[custIndex].installments[instIndex].status = 'paid';
+        function deleteCustomer(index) {
+            if(confirm("هل أنت متأكد؟")) {
+                const c = appData.customers[index];
+                appData.regions.forEach(r => r.buildings.forEach(b => {
+                    let u = b.units.find(u => u.code === c.unit && b.name === c.building);
+                    if(u) u.status = 'available';
+                }));
+                appData.customers.splice(index, 1);
                 saveData();
-                alert("تم التحصيل بنجاح");
-                viewCustomerDetail(custIndex);
+                renderCustomerRegistry();
             }
         }
 
@@ -884,26 +1604,38 @@
             document.getElementById('main-content').innerHTML = html;
         }
 
-        function deleteCustomer(index) {
-            if(confirm("هل أنت متأكد؟")) {
-                const c = appData.customers[index];
-                appData.regions.forEach(r => r.buildings.forEach(b => {
-                    let u = b.units.find(u => u.code === c.unit && b.name === c.building);
-                    if(u) u.status = 'available';
-                }));
-                appData.customers.splice(index, 1);
-                saveData();
-                renderCustomerRegistry();
-            }
-        }
-
         function checkNotifications() {
             let today = new Date().toISOString().split('T')[0];
             let count = 0;
             appData.customers.forEach(c => c.installments.forEach(inst => { if(inst.status === 'pending' && inst.d <= today) count++; }));
             const badge = document.getElementById('notif-count');
-            badge.innerText = count;
-            badge.style.display = count > 0 ? 'block' : 'none';
+            if(badge) { badge.innerText = count; badge.style.display = count > 0 ? 'block' : 'none'; }
+        }
+
+        function showNotifications() {
+            let today = new Date().toISOString().split('T')[0];
+            let notifications = [];
+            appData.customers.forEach(c => {
+                c.installments.forEach(inst => {
+                    if(inst.status === 'pending' && inst.d <= today) {
+                        notifications.push({ cust: c.name, unit: c.unit, date: inst.d, amount: inst.a });
+                    }
+                });
+            });
+            
+            if(notifications.length === 0) {
+                alert('لا توجد أقساط مستحقة');
+                return;
+            }
+            
+            document.getElementById('current-command-text').innerText = 'الأقساط المستحقة';
+            let html = `<table class="res-table">
+                <thead><tr><th>العميل</th><th>الوحدة</th><th>التاريخ</th><th>المبلغ</th></tr></thead>
+                <tbody>
+                    ${notifications.map(n => `<tr><td>${n.cust}</td><td>${n.unit}</td><td>${n.date}</td><td>${n.amount.toLocaleString()}</td></tr>`).join('')}
+                </tbody>
+            </table>`;
+            document.getElementById('main-content').innerHTML = html;
         }
 
         function goBack() {
@@ -914,27 +1646,195 @@
 
         function updateClock() {
             const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString('ar-EG');
-            document.getElementById('date').innerText = now.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const clockEl = document.getElementById('clock');
+            const dateEl = document.getElementById('date');
+            if(clockEl) clockEl.innerText = now.toLocaleTimeString('ar-EG');
+            if(dateEl) dateEl.innerText = now.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         }
         setInterval(updateClock, 1000);
         updateClock();
 
-        window.onload = () => { checkNotifications(); };
-function addExternalRow() {
-    const d = document.getElementById('ext-date').value;
-    const b = document.getElementById('ext-desc').value;
-    const m = document.getElementById('ext-amount').value;
-    if(d && b && m) {
-        const row = `<tr style="border-bottom: 1px solid #f0f0f0;">
-            <td style="padding:10px;">${d}</td>
-            <td style="padding:10px;">${b}</td>
-            <td style="padding:10px; color:var(--sahab-red); font-weight:bold;">${m}</td>
-        </tr>`;
-        document.getElementById('ext-table-body').insertAdjacentHTML('afterbegin', row);
-        document.getElementById('ext-desc').value = ''; document.getElementById('ext-amount').value = '';
-    }
-}
+        function exportBackup() {
+            // تصدير جميع البيانات الحالية إلى ملف JSON
+            const dataToExport = {
+                timestamp: new Date().toISOString(),
+                regions: appData.regions,
+                customers: appData.customers,
+                expenses: appData.expenses,
+                externalExpenses: appData.externalExpenses
+            };
+            
+            const dataStr = JSON.stringify(dataToExport, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            const exportFileDefaultName = 'sahab_backup_' + new Date().toISOString().split('T')[0] + '.json';
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            alert('✅ تم تصدير النسخة الاحتياطية بنجاح');
+        }
+
+        function saveDataToFile() {
+            // إنشاء ملف HTML جديد مع البيانات الحالية مدمجة بشكل كامل
+            alert('⏳ جاري إعداد الملف مع البيانات الكاملة... يرجى الانتظار');
+            
+            // تحديث البيانات المدمجة بآخر حالة
+            let finalEmbeddedData = {
+                regions: appData.regions,
+                customers: appData.customers,
+                expenses: appData.expenses,
+                externalExpenses: appData.externalExpenses,
+                collections: appData.collections,
+                lastUpdate: new Date().toISOString()
+            };
+            
+            // الحصول على محتوى الملف الحالي
+            fetch(window.location.href)
+                .then(response => response.text())
+                .then(htmlContent => {
+                    // تحديث embeddedDataJson في الملف
+                    const escapedData = JSON.stringify(finalEmbeddedData, null, 2)
+                        .replace(/`/g, '\\`')
+                        .replace(/\$/g, '\\$');
+                    
+                    let updatedHtml = htmlContent.replace(
+                        /let embeddedDataJson = `[\s\S]*?`;/,
+                        `let embeddedDataJson = \`${escapedData}\`;`
+                    );
+                    
+                    // تنزيل الملف المحدّث
+                    const blob = new Blob([updatedHtml], { type: 'text/html;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `sahab_data_${new Date().toISOString().split('T')[0]}.html`;
+                    link.click();
+                    
+                    alert(`✅ تم إعداد الملف بنجاح!\n\n📊 البيانات المضمنة:\n• عدد العمارات: ${appData.regions.length}\n• عدد العملاء: ${appData.customers.length}\n• عدد التحصيلات: ${appData.collections.length}\n\n📤 الملف جاهز للتحميل\n\n💡 انقل هذا الملف لأي جهاز وفتحه = جميع البيانات موجودة!`);
+                })
+                .catch(err => {
+                    console.error(err);
+                    // بديل: تصدير كـ JSON إذا فشل الطريقة الأولى
+                    const dataToExport = finalEmbeddedData;
+                    const dataStr = JSON.stringify(dataToExport, null, 2);
+                    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                    const linkElement = document.createElement('a');
+                    linkElement.setAttribute('href', dataUri);
+                    linkElement.setAttribute('download', `sahab_data_${new Date().toISOString().split('T')[0]}.json`);
+                    linkElement.click();
+                    alert('✅ تم تصدير البيانات كـ JSON\n\n💡 يمكنك استيراد هذا الملف لاحقاً');
+                });
+        }
+
+        function handleImport(event) {
+            // استيراد البيانات من ملف JSON
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    
+                    // التحقق من صحة الملف
+                    if (imported.regions !== undefined && imported.customers !== undefined) {
+                        appData.regions = imported.regions || [];
+                        appData.customers = imported.customers || [];
+                        appData.expenses = imported.expenses || [];
+                        appData.externalExpenses = imported.externalExpenses || [];
+                        
+                        saveData();
+                        alert("✅ تم استيراد البيانات بنجاح!\nسيتم تحديث الصفحة...");
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        alert("❌ ملف غير صحيح! تأكد من الملف المستورد");
+                    }
+                } catch (err) { 
+                    alert("❌ خطأ في قراءة الملف: " + err.message); 
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function renderSettings() {
+            if (currentUser !== 'admin') return alert("صلاحية Admin فقط");
+            appData.currentView = 'settings';
+            document.getElementById('current-command-text').innerText = "إعدادات النظام";
+            let html = `
+                <div class="installment-card">
+                    <h3 style="color:var(--sahab-red);">⚙️ تغيير كلمات السر</h3>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                        <div><span class="field-label">كلمة سر Admin</span><input type="text" id="new-admin-pass" class="installment-input" value="${passwords.admin}"></div>
+                        <div><span class="field-label">كلمة سر User</span><input type="text" id="new-viewer-pass" class="installment-input" value="${passwords.viewer}"></div>
+                    </div>
+                    <button onclick="updatePasswords()" style="width:100%; padding:12px; background:var(--sahab-green); color:white; border:none; border-radius:10px; font-weight:900; cursor:pointer; margin-top:20px;"><i class="fas fa-check" style="margin-left: 8px;"></i>حفظ كلمات السر الجديدة</button>
+                </div>
+                <div class="installment-card">
+                    <h3 style="color:var(--sahab-red);">💾 إدارة البيانات والحفظ المتقدم</h3>
+                    <p style="color: #666; font-size: 12px; margin: 10px 0;">✅ البيانات محفوظة تلقائياً على جهازك وداخل الملف</p>
+                    <div style="display:flex; flex-direction: column; gap:10px;">
+                        <button onclick="saveDataToFile()" style="width:100%; padding:12px; background:#27ae60; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; font-size:14px;"><i class="fas fa-file-download"></i>💾 حفظ الملف مع جميع البيانات (للنقل)</button>
+                        <button onclick="exportBackup()" style="width:100%; padding:12px; background:#3498db; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px;"><i class="fas fa-download"></i>📥 تصدير نسخة احتياطية JSON</button>
+                        <button onclick="document.getElementById('settingsImportFile').click()" style="width:100%; padding:12px; background:var(--gold); color:#333; border:none; border-radius:10px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px;"><i class="fas fa-upload"></i>📤 استيراد نسخة احتياطية</button>
+                        <input type="file" id="settingsImportFile" style="display:none" accept=".json" onchange="handleImport(event)">
+                        <button onclick="initializeData()" style="width:100%; padding:12px; background:var(--sahab-red); color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px;"><i class="fas fa-undo"></i>🔄 إعادة تحميل البيانات من الملف</button>
+                    </div>
+                    
+                    <div style="background:#e8f5e9; border:2px solid #27ae60; border-radius:8px; padding:15px; margin-top:15px; font-size:12px; color:#333;">
+                        <strong style="color:#27ae60; font-size:13px;">🔐 نظام الحفظ الثلاثي المتقدم:</strong><br><br>
+                        
+                        <strong style="color:#1976d2; display:block; margin-top:8px;">📱 1️⃣ الذاكرة المحلية (Session Storage):</strong>
+                        <small style="color:#666; display:block; margin-left:20px;">كل التعديلات تُحفظ تلقائياً على متصفحك فوراً ✓</small>
+                        
+                        <strong style="color:#1976d2; display:block; margin-top:8px;">💾 2️⃣ ملف HTML متضمن (Embedded Data):</strong>
+                        <small style="color:#666; display:block; margin-left:20px;">جميع البيانات مدمجة داخل الملف ذاته (العمارات، العملاء، الأقساط، التحصيلات)</small>
+                        
+                        <strong style="color:#1976d2; display:block; margin-top:8px;">☁️ 3️⃣ نقل آمن بين الأجهزة:</strong>
+                        <small style="color:#666; display:block; margin-left:20px;">فتح الملف على أي جهاز = جميع البيانات موجودة فوراً</small>
+                    </div>
+                    
+                    <div style="background:#fff3e0; border:2px solid #ff9800; border-radius:8px; padding:15px; margin-top:12px; font-size:12px;">
+                        <strong style="color:#e65100; font-size:13px;">⚡ خطوات العمل الموصى به:</strong><br><br>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                            <div style="background:#fff; padding:10px; border-radius:5px; border-left:3px solid #ff9800;">
+                                <strong style="color:#ff6f00;">أثناء العمل:</strong><br>
+                                ✓ أضف/عدّل البيانات<br>
+                                ✓ تحفظ تلقائياً محلياً<br>
+                                ✓ استمر في العمل
+                            </div>
+                            <div style="background:#fff; padding:10px; border-radius:5px; border-left:3px solid #ff9800;">
+                                <strong style="color:#ff6f00;">عند الانتهاء:</strong><br>
+                                ✓ اضغط "حفظ الملف"<br>
+                                ✓ انقل الملف للفريق<br>
+                                ✓ فتح = جميع البيانات جاهزة
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background:#e3f2fd; border:1px solid #2196F3; border-radius:8px; padding:12px; margin-top:12px; font-size:11px; color:#1976d2;">
+                        <strong>💡 نصائح مهمة:</strong><br>
+                        • احفظ الملف المحدّث يومياً أو بعد تحديثات مهمة<br>
+                        • الملف يحتفظ بكل البيانات حتى لو غيرت كلمة السر<br>
+                        • يمكنك احتفاظ بنسخ احتياطية قديمة آمنة<br>
+                        • لا تحتاج إنترنت - كل شيء يعمل بدون اتصال
+                    </div>
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function updatePasswords() {
+            const adminP = document.getElementById('new-admin-pass').value;
+            const viewerP = document.getElementById('new-viewer-pass').value;
+            if (!adminP || !viewerP) return alert("يرجى إدخال كلمات السر");
+            passwords.admin = adminP; 
+            passwords.viewer = viewerP;
+            localStorage.setItem('sahab_passwords', JSON.stringify(passwords));
+            alert('✅ تم تحديث كلمات السر بنجاح');
+        }
+
+        window.onload = () => { 
+            initializeData();
+            checkNotifications(); 
+        };
     </script>
 </body>
 </html>
