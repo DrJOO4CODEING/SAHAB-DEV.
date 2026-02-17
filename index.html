@@ -609,7 +609,7 @@
                     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:15px;">
                         <div class="dashboard-card" onclick="renderRegions()"><div class="value">${appData.regions.length}</div><div class="label">المناطق</div></div>
                         <div class="dashboard-card" onclick="executeAction('سجل العملاء')"><div class="value">${totalSold}</div><div class="label">الوحدات المباعة</div></div>
-                        <div class="dashboard-card"><div class="value">${totalUnits - totalSold}</div><div class="label">الوحدات المتاحة</div></div>
+                        <div class="dashboard-card" onclick="renderAvailableUnitsByBuilding()"><div class="value">${totalUnits - totalSold}</div><div class="label">الوحدات المتاحة</div></div>
                         <div class="dashboard-card" onclick="executeAction('الخزينة')"><div class="value">${totalIncome.toLocaleString()}</div><div class="label">إجمالي التحصيل</div></div>
                     </div>
                     <div style="margin-top:20px; background:white; padding:20px; border-radius:15px; border:1px solid #ddd;">
@@ -768,8 +768,16 @@
                             </div>
                             <div><small>تاريخ أول قسط</small><input type="date" id="qStart" class="installment-input" value="${editData ? editData.qStart : new Date().toISOString().split('T')[0]}"></div>
                         </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
+                            <div><span class="field-label">مقدم التعاقد</span><input type="number" id="downPayment" class="installment-input" value="${editData ? editData.downPayment : ''}"></div>
+                            <div><span class="field-label">تاريخ مقدم التعاقد</span><input type="date" id="downPaymentDate" class="installment-input" value="${editData ? editData.downPaymentDate : new Date().toISOString().split('T')[0]}"></div>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:5px;">
+                            <div><span class="field-label">مقدم الاستلام</span><input type="number" id="deliveryPayment" class="installment-input" value="${editData ? editData.deliveryPayment : ''}"></div>
+                            <div><span class="field-label">تاريخ مقدم الاستلام</span><input type="date" id="deliveryPaymentDate" class="installment-input" value="${editData ? editData.deliveryPaymentDate : ''}"></div>
+                        </div>
                         <div style="margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
-                            <span class="field-label">دفعات إضافية / مقدم (اختياري)</span>
+                            <span class="field-label">دفعات إضافية أخرى (اختياري)</span>
                             <div id="extra-payments-container">
                                 ${editData && editData.extraPayments ? editData.extraPayments.map((ex, i) => `
                                     <div style="display:grid; grid-template-columns: 1fr 1fr 1fr auto; gap:5px; margin-bottom:5px;">
@@ -851,17 +859,24 @@
                 let qCount = parseInt(document.getElementById('qCount').value) || 1;
                 let qFreq = parseInt(document.getElementById('qFreq').value);
                 let qStart = document.getElementById('qStart').value;
+                let downPayment = parseFloat(document.getElementById('downPayment').value) || 0;
+                let downPaymentDate = document.getElementById('downPaymentDate').value;
+                let deliveryPayment = parseFloat(document.getElementById('deliveryPayment').value) || 0;
+                let deliveryPaymentDate = document.getElementById('deliveryPaymentDate').value;
 
                 let extraPayments = [];
                 document.querySelectorAll('#extra-payments-container > div').forEach(div => {
                     let d = div.querySelector('.ex-date').value;
                     let a = parseFloat(div.querySelector('.ex-amt').value) || 0;
-                    let t = div.querySelector('.ex-note').value || 'دفعة';
+                    let t = div.querySelector('.ex-note').value || 'دفعة إضافية';
                     if(d && a > 0) extraPayments.push({ d, a, t, status: 'pending' });
                 });
 
                 let installments = [];
-                let extraTotal = extraPayments.reduce((s, p) => s + p.a, 0);
+                if (downPayment > 0 && downPaymentDate) installments.push({ d: downPaymentDate, a: downPayment, t: "مقدم تعاقد", status: 'pending' });
+                if (deliveryPayment > 0 && deliveryPaymentDate) installments.push({ d: deliveryPaymentDate, a: deliveryPayment, t: "مقدم استلام", status: 'pending' });
+                
+                let extraTotal = extraPayments.reduce((s, p) => s + p.a, 0) + downPayment + deliveryPayment;
                 let remaining = total - extraTotal;
                 let instAmt = Math.round((remaining / qCount) * 100) / 100;
 
@@ -876,6 +891,7 @@
 
                 let customerData = { 
                     name, phone, total, qCount, qFreq, qStart, 
+                    downPayment, downPaymentDate, deliveryPayment, deliveryPaymentDate,
                     region: regionObj.name, building: buildingObj.name, unit: ucode, 
                     installments, extraPayments 
                 };
@@ -1224,6 +1240,10 @@
                 document.getElementById('current-command-text').innerText = "الخزينة والتقارير المالية";
                 let totalIncome = 0;
                 appData.customers.forEach(c => c.installments.forEach(inst => { if(inst.status === 'paid') totalIncome += inst.a; }));
+                
+                // إضافة المبالغ المحصلة من جدول التحصيلات التي قد لا تكون مرتبطة مباشرة بالأقساط (اختياري حسب الرغبة)
+                // ولكن الطلب حدد "من جدول الأقساط"، لذا سنكتفي بما تم حسابه أعلاه لضمان الدقة
+                
                 let totalOut = appData.expenses.reduce((s, e) => s + e.amount, 0);
                 let balance = totalIncome - totalOut;
                 
@@ -1254,6 +1274,35 @@
                                 <strong style="font-size:18px; color:var(--sahab-green);">${appData.customers.reduce((sum, c) => sum + c.installments.filter(x => x.status === 'paid').length, 0)}</strong>
                             </div>
                         </div>
+                    </div>
+                `;
+                document.getElementById('main-content').innerHTML = html;
+            }
+
+            function renderAvailableUnitsByBuilding() {
+                document.getElementById('current-command-text').innerText = "الوحدات المتاحة حسب العمارة";
+                let html = `
+                    <div class="installment-card">
+                        <h3 style="color:var(--sahab-red);"><i class="fas fa-door-open" style="margin-left: 8px;"></i>الوحدات المتاحة في كل عمارة</h3>
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:15px;">
+                        ${appData.regions.flatMap(r => r.buildings.map(b => {
+                            let availableUnits = b.units.filter(u => u.status === 'available');
+                            if(availableUnits.length === 0) return '';
+                            return `
+                                <div class="building-icon-card" onclick="renderUnits(${r.id}, ${b.id})">
+                                    <i class="fas fa-building" style="color:var(--sahab-green);"></i>
+                                    <strong>${b.name}</strong>
+                                    <div style="margin-top:5px; font-size:12px; color:#666;">
+                                        ${availableUnits.length} وحدة متاحة
+                                    </div>
+                                    <div style="margin-top:5px; display:flex; flex-wrap:wrap; gap:2px; justify-content:center;">
+                                        ${availableUnits.slice(0, 5).map(u => `<span style="font-size:9px; background:#e8f5e9; padding:2px 4px; border-radius:3px;">${u.code}</span>`).join('')}
+                                        ${availableUnits.length > 5 ? '...' : ''}
+                                    </div>
+                                </div>
+                            `;
+                        })).join('')}
                     </div>
                 `;
                 document.getElementById('main-content').innerHTML = html;
