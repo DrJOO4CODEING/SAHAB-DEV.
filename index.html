@@ -1,4 +1,4 @@
-    <!DOCTYPE html>
+.    <!DOCTYPE html>
     <html lang="ar" dir="rtl">
     <head>
         <meta charset="UTF-8">
@@ -260,15 +260,29 @@
             let currentUser = null;
             let passwords = JSON.parse(localStorage.getItem('sahab_passwords')) || { admin: '123', viewer: '456' };
 
-            // --- نظام GitHub Cloud Sync ---
-            let githubConfig = JSON.parse(localStorage.getItem('sahab_github_config')) || {
-                enabled: true,
-                owner: 'DrJOO4CODEING',
-                repo: 'SAHAB-REAL-EST',
-                token: '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',
-                branch: 'main',
-                filePath: 'DATA.JSON'
-            };
+
+
+// --- إعدادات شركة سحاب للتطوير العقاري ---
+// على الجهاز الجديد: نقرأ من localStorage إن وُجد، وإلا نستخدم القيم الافتراضية المضمّنة في الملف
+const _defaultGitHubConfig = {
+    enabled: true,
+    owner: 'DrJOO4CODEING',
+    repo: 'SAHAB-REAL-EST',
+    token: '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',
+    branch: 'main',
+    filePath: 'data.json'
+};
+try {
+    const saved = localStorage.getItem('sahab_github_config');
+    githubConfig = (saved ? JSON.parse(saved) : null) || _defaultGitHubConfig;
+} catch (e) {
+    githubConfig = _defaultGitHubConfig;
+}
+// لضمان الحفظ الدائم في المتصفح (لا نكتب فوق إعدادات المستخدم إلا عند الحفظ من واجهة الإعدادات)
+if (!localStorage.getItem('sahab_github_config')) {
+    localStorage.setItem('sahab_github_config', JSON.stringify(githubConfig));
+}
+
             let lastGitHubSync = localStorage.getItem('sahab_last_sync') || null;
             let gitHubSyncInProgress = false;
 
@@ -326,43 +340,121 @@
                 currentView: 'dashboard'
             };
 
-            function initializeData() {
-                // محاولة تحميل من localStorage أولاً
-                let hasLocalData = false;
-                if (localStorage.getItem('sahab_regions')) {
-                    appData.regions = JSON.parse(localStorage.getItem('sahab_regions'));
-                    hasLocalData = true;
-                }
-                if (localStorage.getItem('sahab_customers')) {
-                    appData.customers = JSON.parse(localStorage.getItem('sahab_customers'));
-                }
-                if (localStorage.getItem('sahab_expenses')) {
-                    appData.expenses = JSON.parse(localStorage.getItem('sahab_expenses'));
-                }
-                if (localStorage.getItem('sahab_external_expenses')) {
-                    appData.externalExpenses = JSON.parse(localStorage.getItem('sahab_external_expenses'));
-                }
-                if (localStorage.getItem('sahab_collections')) {
-                    appData.collections = JSON.parse(localStorage.getItem('sahab_collections'));
-                }
-                
-                // إذا ما فيه بيانات محلية، حاول تحميل من البيانات المدمجة
-                if (!hasLocalData) {
+// فك ترميز Base64 إلى UTF-8 بشكل آمن (يدعم العربية والأحرف الخاصة عند الفتح من أي جهاز)
+            function base64DecodeUTF8(base64Str) {
+                try {
+                    const binary = atob(base64Str.replace(/\s/g, ''));
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                    return typeof TextDecoder !== 'undefined'
+                        ? new TextDecoder('utf-8').decode(bytes)
+                        : decodeURIComponent(escape(binary));
+                } catch (e) {
                     try {
-                        let embedded = JSON.parse(embeddedDataJson);
-                        appData.regions = embedded.regions || [];
-                        appData.customers = embedded.customers || [];
-                        appData.expenses = embedded.expenses || [];
-                        appData.externalExpenses = embedded.externalExpenses || [];
-                        appData.collections = embedded.collections || [];
-                        console.log('✅ تم تحميل البيانات من داخل الملف');
-                    } catch(e) {
-                        console.log('⚠️ لا توجد بيانات محفوظة - ابدأ بجديد');
+                        return decodeURIComponent(escape(atob(base64Str)));
+                    } catch (e2) {
+                        console.warn('Base64 decode fallback failed:', e2);
+                        return '';
                     }
                 }
             }
 
-            function saveData() {
+async function initializeData() {
+                // 1. محاولة جلب البيانات من السحابة (GitHub)
+                if (githubConfig && githubConfig.enabled && githubConfig.token) {
+                    try {
+                        console.log("🔄 جاري محاولة الاتصال بـ GitHub...");
+                        const response = await fetch(`https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${githubConfig.filePath}`, {
+                            headers: { 'Authorization': `token ${githubConfig.token}`, 'Accept': 'application/vnd.github.v3+json' }
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            const content = base64DecodeUTF8(data.content || '');
+                            if (!content) throw new Error('فشل فك ترميز محتوى الملف');
+                            const cloudData = JSON.parse(content);
+                            
+                            // تحديث appData.regions بالبيانات من السحابة
+                            if (cloudData.regions && Array.isArray(cloudData.regions)) {
+                                appData.regions = cloudData.regions;
+                            }
+                            if (cloudData.customers && Array.isArray(cloudData.customers)) {
+                                appData.customers = cloudData.customers;
+                            }
+                            if (cloudData.expenses && Array.isArray(cloudData.expenses)) {
+                                appData.expenses = cloudData.expenses;
+                            }
+                            if (cloudData.externalExpenses && Array.isArray(cloudData.externalExpenses)) {
+                                appData.externalExpenses = cloudData.externalExpenses;
+                            }
+                            if (cloudData.collections && Array.isArray(cloudData.collections)) {
+                                appData.collections = cloudData.collections;
+                            }
+                            
+                            // حفظ محلياً
+                            localStorage.setItem('sahab_regions', JSON.stringify(appData.regions));
+                            localStorage.setItem('sahab_customers', JSON.stringify(appData.customers));
+                            localStorage.setItem('sahab_expenses', JSON.stringify(appData.expenses));
+                            localStorage.setItem('sahab_external_expenses', JSON.stringify(appData.externalExpenses));
+                            localStorage.setItem('sahab_collections', JSON.stringify(appData.collections));
+                            
+                            console.log("✅ تم تحميل البيانات من GitHub");
+                            showGitHubSyncIndicator('success');
+                            renderDashboard();
+                            renderTree();
+                            return; 
+                        } else if (response.status === 404) {
+                            console.log("ℹ️ الملف غير موجود على GitHub - سيتم إنشاء ملف جديد عند أول حفظ");
+                        }
+                    } catch (e) {
+                        console.warn("⚠️ فشل جلب البيانات من الشبكة (أول فتح من جهاز آخر؟):", e.message);
+                        // المتابعة للتخزين المحلي أو البيانات المضمّنة
+                    }
+                }
+
+                // 2. تحميل من التخزين المحلي
+                let hasLocal = false;
+                try {
+                    const localRegions = localStorage.getItem('sahab_regions');
+                    const localCustomers = localStorage.getItem('sahab_customers');
+                    const localExpenses = localStorage.getItem('sahab_expenses');
+                    const localExtExpenses = localStorage.getItem('sahab_external_expenses');
+                    const localCollections = localStorage.getItem('sahab_collections');
+                    
+                    if (localRegions) { appData.regions = JSON.parse(localRegions); hasLocal = true; }
+                    if (localCustomers) { appData.customers = JSON.parse(localCustomers); hasLocal = true; }
+                    if (localExpenses) { appData.expenses = JSON.parse(localExpenses); hasLocal = true; }
+                    if (localExtExpenses) { appData.externalExpenses = JSON.parse(localExtExpenses); hasLocal = true; }
+                    if (localCollections) { appData.collections = JSON.parse(localCollections); hasLocal = true; }
+                    
+                    if (hasLocal) console.log("✅ تم تحميل البيانات من التخزين المحلي");
+                } catch (e) {
+                    console.warn("⚠️ خطأ في تحميل البيانات المحلية:", e.message);
+                }
+                
+                // 3. إن لم يكن هناك محلي (أول فتح من جهاز آخر): تحميل من البيانات المضمّنة في الملف
+                if (!hasLocal && typeof embeddedDataJson === 'string') {
+                    try {
+                        const embedded = JSON.parse(embeddedDataJson);
+                        if (embedded && (embedded.regions || embedded.customers)) {
+                            if (embedded.regions && Array.isArray(embedded.regions)) appData.regions = embedded.regions;
+                            if (embedded.customers && Array.isArray(embedded.customers)) appData.customers = embedded.customers;
+                            if (embedded.expenses && Array.isArray(embedded.expenses)) appData.expenses = embedded.expenses;
+                            if (embedded.externalExpenses && Array.isArray(embedded.externalExpenses)) appData.externalExpenses = embedded.externalExpenses;
+                            if (embedded.collections && Array.isArray(embedded.collections)) appData.collections = embedded.collections;
+                            console.log("✅ تم تحميل البيانات من الملف المضمّن (أول فتح على هذا الجهاز)");
+                            saveData();
+                        }
+                    } catch (e) {
+                        console.warn("⚠️ لا توجد بيانات مضمّنة أو خطأ في قراءتها:", e.message);
+                    }
+                }
+                
+                renderDashboard();
+                renderTree();
+            }
+
+function saveData() {
                 // حفظ تلقائي في localStorage
                 localStorage.setItem('sahab_regions', JSON.stringify(appData.regions));
                 localStorage.setItem('sahab_customers', JSON.stringify(appData.customers));
@@ -510,11 +602,22 @@
             }
 
             async function generateHtmlWithData() {
-                // الحصول على محتوى الملف الحالي
-                const response = await fetch(window.location.href);
-                let htmlContent = await response.text();
+                let htmlContent;
+                const isFileProtocol = window.location.protocol === 'file:';
+                try {
+                    if (isFileProtocol) {
+                        // عند الفتح من file:// (مثلاً جهاز آخر أو ملف محفوظ) لا يعمل fetch على نفس الصفحة
+                        htmlContent = document.documentElement.outerHTML;
+                    } else {
+                        const response = await fetch(window.location.href, { cache: 'no-store' });
+                        if (!response.ok) throw new Error('Network response not ok');
+                        htmlContent = await response.text();
+                    }
+                } catch (e) {
+                    console.warn('استخدام نسخة الصفحة الحالية بدل جلبها من الرابط:', e.message);
+                    htmlContent = document.documentElement.outerHTML;
+                }
                 
-                // إعداد البيانات
                 const finalData = {
                     regions: appData.regions,
                     customers: appData.customers,
@@ -528,7 +631,6 @@
                     .replace(/`/g, '\\`')
                     .replace(/\$/g, '\\$');
                 
-                // تحديث embeddedDataJson
                 htmlContent = htmlContent.replace(
                     /let embeddedDataJson = `[\s\S]*?`;/,
                     `let embeddedDataJson = \`${escapedData}\`;`
@@ -719,17 +821,26 @@
             function renderInstallmentForm(editIndex = null) {
                 if (currentUser !== 'admin') return alert("صلاحية Admin فقط");
                 let editData = editIndex !== null ? appData.customers[editIndex] : null;
-                let unitCode = editData ? editData.unit : (appData.selected.ucode || '');
-                let buildingName = editData ? editData.building : (appData.selected.bid ? appData.regions.find(r => r.id === appData.selected.rid).buildings.find(b => b.id === appData.selected.bid).name : '');
-                let regionName = editData ? editData.region : (appData.selected.rid ? appData.regions.find(r => r.id === appData.selected.rid).name : '');
+                // عند التعديل من سجل العملاء: استحضار بيانات العقد السابق (المنطقة والعمارة) لملء القوائم
+                if (editData) {
+                    const region = appData.regions.find(r => r.name === editData.region);
+                    if (region) {
+                        appData.selected.rid = region.id;
+                        const building = region.buildings.find(b => b.name === editData.building);
+                        if (building) appData.selected.bid = building.id;
+                    }
+                }
+                let unitCode = editData ? (editData.unit || '') : (appData.selected.ucode || '');
+                let buildingName = editData ? (editData.building || '') : (appData.selected.bid ? appData.regions.find(r => r.id === appData.selected.rid).buildings.find(b => b.id === appData.selected.bid).name : '');
+                let regionName = editData ? (editData.region || '') : (appData.selected.rid ? appData.regions.find(r => r.id === appData.selected.rid).name : '');
 
-                document.getElementById('current-command-text').innerText = editData ? "تعديل تعاقد" : "جدولة أقساط";
+                document.getElementById('current-command-text').innerText = editData ? "تعديل تعاقد - استحضار بيانات العقد السابق" : "جدولة أقساط";
                 
                 let html = `
                     <div class="installment-card">
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                            <div><span class="field-label">اسم العميل</span><input type="text" id="custName" class="installment-input" value="${editData ? editData.name : ''}"></div>
-                            <div><span class="field-label">رقم الهاتف</span><input type="text" id="phone" class="installment-input" value="${editData ? editData.phone : ''}"></div>
+                            <div><span class="field-label">اسم العميل</span><input type="text" id="custName" class="installment-input" value="${(editData && editData.name) ? String(editData.name) : ''}"></div>
+                            <div><span class="field-label">رقم الهاتف</span><input type="text" id="phone" class="installment-input" value="${(editData && editData.phone) ? String(editData.phone) : ''}"></div>
                         </div>
                         <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-top:10px;">
                             <div><span class="field-label">المنطقة</span>
@@ -753,28 +864,28 @@
                         </div>
                         <div style="margin-top:10px;">
                             <span class="field-label">إجمالي سعر الوحدة</span>
-                            <input type="number" id="totalPrice" class="installment-input" value="${editData ? editData.total : ''}">
+                            <input type="number" id="totalPrice" class="installment-input" value="${(editData && editData.total != null) ? editData.total : ''}">
                         </div>
                     </div>
                     <div class="installment-card">
                         <span class="field-label">إعدادات الأقساط</span>
                         <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px;">
-                            <div><small>عدد الأقساط</small><input type="number" id="qCount" class="installment-input" value="${editData ? editData.qCount : 28}"></div>
+                            <div><small>عدد الأقساط</small><input type="number" id="qCount" class="installment-input" value="${(editData && editData.qCount != null) ? editData.qCount : 28}"></div>
                             <div><small>نظام القسط</small>
                                 <select id="qFreq" class="installment-input">
                                     <option value="1" ${editData && editData.qFreq == 1 ? 'selected' : ''}>شهري</option>
                                     <option value="3" ${editData && editData.qFreq == 3 ? 'selected' : ''}>ربع سنوي</option>
                                 </select>
                             </div>
-                            <div><small>تاريخ أول قسط</small><input type="date" id="qStart" class="installment-input" value="${editData ? editData.qStart : new Date().toISOString().split('T')[0]}"></div>
+                            <div><small>تاريخ أول قسط</small><input type="date" id="qStart" class="installment-input" value="${(editData && editData.qStart) ? editData.qStart : new Date().toISOString().split('T')[0]}"></div>
                         </div>
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
-                            <div><span class="field-label">مقدم التعاقد</span><input type="number" id="downPayment" class="installment-input" value="${editData ? editData.downPayment : ''}"></div>
-                            <div><span class="field-label">تاريخ مقدم التعاقد</span><input type="date" id="downPaymentDate" class="installment-input" value="${editData ? editData.downPaymentDate : new Date().toISOString().split('T')[0]}"></div>
+                            <div><span class="field-label">مقدم التعاقد</span><input type="number" id="downPayment" class="installment-input" value="${(editData && editData.downPayment != null) ? editData.downPayment : ''}"></div>
+                            <div><span class="field-label">تاريخ مقدم التعاقد</span><input type="date" id="downPaymentDate" class="installment-input" value="${(editData && editData.downPaymentDate) ? editData.downPaymentDate : new Date().toISOString().split('T')[0]}"></div>
                         </div>
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:5px;">
-                            <div><span class="field-label">مقدم الاستلام</span><input type="number" id="deliveryPayment" class="installment-input" value="${editData ? editData.deliveryPayment : ''}"></div>
-                            <div><span class="field-label">تاريخ مقدم الاستلام</span><input type="date" id="deliveryPaymentDate" class="installment-input" value="${editData ? editData.deliveryPaymentDate : ''}"></div>
+                            <div><span class="field-label">مقدم الاستلام</span><input type="number" id="deliveryPayment" class="installment-input" value="${(editData && editData.deliveryPayment != null) ? editData.deliveryPayment : ''}"></div>
+                            <div><span class="field-label">تاريخ مقدم الاستلام</span><input type="date" id="deliveryPaymentDate" class="installment-input" value="${(editData && editData.deliveryPaymentDate) ? editData.deliveryPaymentDate : ''}"></div>
                         </div>
                         <div style="margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
                             <span class="field-label">دفعات إضافية أخرى (اختياري)</span>
@@ -851,7 +962,12 @@
                 let bid = document.getElementById('selBuilding').value;
                 let ucode = document.getElementById('selUnit').value;
 
-                if(!name || !phone || !rid || !bid || !ucode) return alert("يرجى إكمال كافة البيانات");
+                if(!name) return alert("يرجى إدخال اسم العميل");
+                if(!phone) return alert("يرجى إدخال رقم الهاتف");
+                if(!rid) return alert("يرجى اختيار المنطقة");
+                if(!bid) return alert("يرجى اختيار العمارة");
+                if(!ucode) return alert("يرجى اختيار الوحدة");
+                if(!total || total <= 0) return alert("يرجى إدخال إجمالي سعر الوحدة");
 
                 let regionObj = appData.regions.find(r => r.id == rid);
                 let buildingObj = regionObj.buildings.find(b => b.id == bid);
@@ -1801,7 +1917,10 @@
                 } else if (name === 'تحصيل قسط') {
                     renderCollection();
                 } else if (name === 'تعديل') {
-                    if (!appData.selected.type) return alert("يرجى تحديد عنصر أولاً");
+                    if (!appData.selected.type) {
+                        renderCustomerRegistry();
+                        return alert("اختر عميلاً من القائمة (اضغط على الصف) ثم اضغط «تعديل» لاستحضار بيانات العقد السابق وتعديلها");
+                    }
                     if (appData.selected.type === 'customer') renderInstallmentForm(appData.selected.index);
                     else if (appData.selected.type === 'region') editRegion(appData.selected.id);
                     else if (appData.selected.type === 'building') editBuilding(appData.selected.rid, appData.selected.id);
@@ -1984,40 +2103,34 @@
                     lastUpdate: new Date().toISOString()
                 };
                 
-                // الحصول على محتوى الملف الحالي
-                fetch(window.location.href)
-                    .then(response => response.text())
-                    .then(htmlContent => {
-                        // تحديث embeddedDataJson في الملف
-                        const escapedData = JSON.stringify(finalEmbeddedData, null, 2)
-                            .replace(/`/g, '\\`')
-                            .replace(/\$/g, '\\$');
-                        
-                        let updatedHtml = htmlContent.replace(
-                            /let embeddedDataJson = `[\s\S]*?`;/,
-                            `let embeddedDataJson = \`${escapedData}\`;`
-                        );
-                        
-                        // تنزيل الملف المحدّث
-                        const blob = new Blob([updatedHtml], { type: 'text/html;charset=utf-8;' });
-                        const link = document.createElement('a');
-                        link.href = URL.createObjectURL(blob);
-                        link.download = `sahab_data_${new Date().toISOString().split('T')[0]}.html`;
-                        link.click();
-                        
-                        alert(`✅ تم إعداد الملف بنجاح!\n\n📊 البيانات المضمنة:\n• عدد العمارات: ${appData.regions.length}\n• عدد العملاء: ${appData.customers.length}\n• عدد التحصيلات: ${appData.collections.length}\n\n📤 الملف جاهز للتحميل\n\n💡 انقل هذا الملف لأي جهاز وفتحه = جميع البيانات موجودة!`);
-                    })
+                // الحصول على محتوى الملف: من الرابط إن أمكن، وإلا من الصفحة الحالية (مهم عند الفتح من file:// أو جهاز آخر)
+                const escapedData = JSON.stringify(finalEmbeddedData, null, 2)
+                    .replace(/`/g, '\\`')
+                    .replace(/\$/g, '\\$');
+                
+                function buildAndDownloadHtml(htmlContent) {
+                    let updatedHtml = htmlContent.replace(
+                        /let embeddedDataJson = `[\s\S]*?`;/,
+                        `let embeddedDataJson = \`${escapedData}\`;`
+                    );
+                    const blob = new Blob([updatedHtml], { type: 'text/html;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `sahab_data_${new Date().toISOString().split('T')[0]}.html`;
+                    link.click();
+                    alert(`✅ تم إعداد الملف بنجاح!\n\n📊 البيانات المضمنة:\n• عدد العمارات: ${appData.regions.length}\n• عدد العملاء: ${appData.customers.length}\n• عدد التحصيلات: ${appData.collections.length}\n\n📤 الملف جاهز للتحميل\n\n💡 انقل هذا الملف لأي جهاز وفتحه = جميع البيانات موجودة!`);
+                }
+                
+                if (window.location.protocol === 'file:') {
+                    buildAndDownloadHtml(document.documentElement.outerHTML);
+                    return;
+                }
+                fetch(window.location.href, { cache: 'no-store' })
+                    .then(response => response.ok ? response.text() : Promise.reject(new Error('Network')))
+                    .then(htmlContent => buildAndDownloadHtml(htmlContent))
                     .catch(err => {
-                        console.error(err);
-                        // بديل: تصدير كـ JSON إذا فشل الطريقة الأولى
-                        const dataToExport = finalEmbeddedData;
-                        const dataStr = JSON.stringify(dataToExport, null, 2);
-                        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-                        const linkElement = document.createElement('a');
-                        linkElement.setAttribute('href', dataUri);
-                        linkElement.setAttribute('download', `sahab_data_${new Date().toISOString().split('T')[0]}.json`);
-                        linkElement.click();
-                        alert('✅ تم تصدير البيانات كـ JSON\n\n💡 يمكنك استيراد هذا الملف لاحقاً');
+                        console.warn(err);
+                        buildAndDownloadHtml(document.documentElement.outerHTML);
                     });
             }
 
@@ -2037,9 +2150,13 @@
                             appData.expenses = imported.expenses || [];
                             appData.externalExpenses = imported.externalExpenses || [];
                             
-                            saveData();
-                            alert("✅ تم استيراد البيانات بنجاح!\nسيتم تحديث الصفحة...");
-                            setTimeout(() => location.reload(), 1000);
+saveData();
+                            // التعديل هنا يا أبو عمر: سنحدث البيانات فوراً بدلاً من إعادة تحميل الصفحة
+               saveData();
+                            // التعديل هنا يا أبو عمر: سنحدث البيانات فوراً بدلاً من إعادة تحميل الصفحة
+                            renderBuildings(); 
+                            alert("✅ تم استيراد البيانات وتحديثها بنجاح!");
+                            // حذفنا سطر location.reload() لكي لا يطردك المتصفح من تسجيل الدخول
                         } else {
                             alert("❌ ملف غير صحيح! تأكد من الملف المستورد");
                         }
@@ -2047,9 +2164,9 @@
                         alert("❌ خطأ في قراءة الملف: " + err.message); 
                     }
                 };
-                reader.readAsText(file);
-            }
-
+                reader.readAsText(file);}
+                
+            // 
             function showAutoSaveStatus() {
                 // عرض حالة الحفظ التلقائي والإحصائيات
                 const lastSaveTime = new Date().toLocaleString('ar-EG');
@@ -2263,57 +2380,59 @@
                 if (!owner || !repo || !token) {
                     return alert('❌ يرجى ملء جميع الحقول المطلوبة');
                 }
-                
                 githubConfig = {
-                    enabled: true,
-                    owner,
-                    repo,
-                    token,
-                    branch,
-                    filePath
+                    enabled: document.getElementById('github-enable').checked,
+                    owner: owner,
+                    repo: repo,
+                    token: token,
+                    branch: branch,
+                    filePath: filePath
                 };
-                
                 localStorage.setItem('sahab_github_config', JSON.stringify(githubConfig));
                 alert('✅ تم حفظ إعدادات GitHub بنجاح!\n\nسيتم الحفظ على GitHub تلقائياً مع كل تغيير.');
             }
+async function testGithubConnection() {
+    const testBtn = event.target;
+    testBtn.disabled = true;
+    testBtn.innerText = '⌛ جاري الاختبار...';
 
-            async function testGithubConnection() {
-                if (!githubConfig.token) {
-                    return alert('❌ يرجى إدخال Personal Access Token أولاً');
-                }
-                
-                const testBtn = event.target;
-                testBtn.disabled = true;
-                testBtn.innerText = '⏳ جاري الاختبار...';
-                
-                try {
-                    const response = await fetch(
-                        `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}`,
-                        {
-                            headers: {
-                                'Authorization': `token ${githubConfig.token}`,
-                                'Accept': 'application/vnd.github.v3+json'
-                            }
-                        }
-                    );
-                    
-                    if (response.ok) {
-                        alert('✅ تم الاتصال بنجاح!\n\nالمستودع:\n' + `${githubConfig.owner}/${githubConfig.repo}\n\nكل تعديل سيُحفظ تلقائياً على GitHub.`);
-                    } else if (response.status === 404) {
-                        alert('❌ المستودع غير موجود\n\nتأكد من:\n• اسم المستخدم صحيح\n• اسم المستودع صحيح\n• أنت لديك صلاحية الوصول');
-                    } else if (response.status === 401) {
-                        alert('❌ الرمز غير صحيح\n\nتأكد من:\n• الرمز (Token) صحيح\n• الرمز لم ينتهي\n• الرمز له صلاحيات كافية');
-                    } else {
-                        alert('❌ خطأ في الاتصال: ' + response.status);
-                    }
-                } catch (error) {
-                    alert('❌ خطأ في الاتصال:\n' + error.message);
-                } finally {
-                    testBtn.disabled = false;
-                    testBtn.innerText = '🔌 اختبر الاتصال';
-                }
+    try {
+        const response = await fetch(`https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}`, {
+            headers: {
+                'Authorization': `token ${githubConfig.token}`,
+                'Accept': 'application/vnd.github.v3+json'
             }
+        });
 
+        if (response.ok) {
+            alert('✅ تم الاتصال بنجاح!\n\nالمستودع: ' + githubConfig.owner + '/' + githubConfig.repo);
+            // استدعاء جلب البيانات فوراً لملء الأصفار وتحويلها لأرقام حقيقية
+            await initializeData(); 
+        } else {
+            alert('❌ فشل الاتصال! تأكد من الرمز (Token) واسم المستودع');
+        }
+    } catch (error) {
+        alert('❌ خطأ في الشبكة: ' + error.message);
+    } finally {
+        testBtn.disabled = false;
+        testBtn.innerText = '🔌 اختبر الاتصال';
+    }
+}
+
+function updateStats() {
+    // تحديث عدد العمارات (إجمالي العمارات في جميع المناطق)
+    const totalBuildings = appData.regions.reduce((sum, region) => sum + region.buildings.length, 0);
+    document.getElementById('stat-regions').innerText = totalBuildings;
+
+    // تحديث عدد العملاء
+    document.getElementById('stat-customers').innerText = appData.customers.length;
+
+    // تحديث عدد التحصيلات
+    document.getElementById('stat-collections').innerText = appData.collections.length;
+
+    // تحديث وقت آخر تحديث
+    document.getElementById('stat-lastupdate').innerText = new Date().toLocaleTimeString('ar-EG');
+}
             function updatePasswords() {
                 const adminP = document.getElementById('new-admin-pass').value;
                 const viewerP = document.getElementById('new-viewer-pass').value;
