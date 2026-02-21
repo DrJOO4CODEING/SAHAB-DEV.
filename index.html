@@ -1,4 +1,4 @@
-.    <!DOCTYPE html>
+<!DOCTYPE html>
     <html lang="ar" dir="rtl">
     <head>
         <meta charset="UTF-8">
@@ -262,21 +262,576 @@
 
 
 
-// --- إعدادات شركة سحاب للتطوير العقاري ---
-githubConfig = {
-    enabled: true,
-    owner: 'DrJOO4CODEING',
-    repo: 'SAHAB-REAL-EST',
-    token: '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',
-    branch: 'main',
-    filePath: 'data.json' 
+// === إعدادات Upstash Redis ===
+let upstashConfig = JSON.parse(localStorage.getItem('sahab_upstash_config')) || {
+    enabled: true, // مفعّل تلقائياً
+    url: 'https://distinct-bull-37854.upstash.io',
+    token: 'AZPeAAIncDFmMTBlMGE5YzBlNmI0ZTgwYTkxNWRmOGYzMjk4NTYwY3AxMzc4NTQ',
+    key: 'sahab_data'
 };
-// لضمان الحفظ الدائم في المتصفح
-localStorage.setItem('sahab_github_config', JSON.stringify(githubConfig));
 
-            let lastGitHubSync = localStorage.getItem('sahab_last_sync') || null;
-            let gitHubSyncInProgress = false;
+let lastCloudSync = localStorage.getItem('sahab_last_sync') || null;
+let cloudSyncInProgress = false;
 
+/**
+ * تحميل البيانات من Upstash Redis
+ */
+async function loadFromUpstash() {
+    try {
+        const response = await fetch(`${upstashConfig.url}/get/${upstashConfig.key}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${upstashConfig.token}`
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.result) {
+                return JSON.parse(data.result);
+            }
+        }
+        return null;
+    } catch (error) {
+        console.error('Upstash Load Error:', error);
+        throw error;
+    }
+}
+
+/**
+ * حفظ البيانات إلى Upstash Redis
+ */
+async function saveToUpstash() {
+    if (!upstashConfig.enabled || !upstashConfig.url || !upstashConfig.token) return;
+    if (cloudSyncInProgress) return;
+
+    cloudSyncInProgress = true;
+    showCloudSyncIndicator('syncing');
+
+    try {
+        const dataToSave = {
+            regions: appData.regions,
+            customers: appData.customers,
+            expenses: appData.expenses,
+            externalExpenses: appData.externalExpenses,
+            collections: appData.collections,
+            lastUpdate: new Date().toISOString()
+        };
+
+        const response = await fetch(`${upstashConfig.url}/set/${upstashConfig.key}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${upstashConfig.token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dataToSave)
+        });
+
+        if (response.ok) {
+            lastCloudSync = new Date().toISOString();
+            localStorage.setItem('sahab_last_sync', lastCloudSync);
+            showCloudSyncIndicator('success');
+            console.log("✅ تم الحفظ على Upstash Redis");
+        } else {
+            const error = await response.text();
+            console.error('Upstash Save Error:', error);
+            showCloudSyncIndicator('error', error);
+        }
+    } catch (error) {
+        console.error('Upstash Sync Failed:', error);
+        showCloudSyncIndicator('error', error.message);
+    } finally {
+        cloudSyncInProgress = false;
+    }
+}
+
+/**
+ * عرض مؤشر حالة المزامنة السحابية
+ */
+function showCloudSyncIndicator(status, message = '') {
+    const oldIndicator = document.getElementById('cloud-sync-indicator');
+    if (oldIndicator) oldIndicator.remove();
+    
+    let colors = {
+        'syncing': { bg: '#3498db', text: '⏳ جاري الحفظ على السحابة...' },
+        'success': { bg: '#27ae60', text: '☁️ تم الحفظ على السحابة' },
+        'error': { bg: '#e74c3c', text: '❌ خطأ في الحفظ' }
+    };
+    
+    const config = colors[status] || colors['syncing'];
+    
+    const indicator = document.createElement('div');
+    indicator.id = 'cloud-sync-indicator';
+    indicator.style.cssText = `
+        position: fixed;
+        bottom: 60px;
+        right: 20px;
+        background: ${config.bg};
+        color: white;
+        padding: 12px 18px;
+        border-radius: 25px;
+        font-size: 12px;
+        font-weight: bold;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        animation: slideIn 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        z-index: 10001;
+    `;
+    indicator.innerHTML = config.text;
+    document.body.appendChild(indicator);
+    
+    if (status !== 'syncing') {
+        setTimeout(() => {
+            indicator.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => indicator.remove(), 300);
+        }, 3000);
+    }
+}
+
+/**
+ * تهيئة البيانات مع Upstash
+ * استبدل وظيفة initializeData() القديمة بهذه
+ */
+async function initializeData() {
+    try {
+        // 1. محاولة جلب البيانات من Upstash Redis
+        if (upstashConfig.enabled && upstashConfig.url && upstashConfig.token) {
+            try {
+                console.log("🔄 جاري الاتصال بـ Upstash Redis...");
+                const cloudData = await loadFromUpstash();
+                
+                if (cloudData && cloudData.regions) {
+                    appData.regions = cloudData.regions || [];
+                    appData.customers = cloudData.customers || [];
+                    appData.expenses = cloudData.expenses || [];
+                    appData.externalExpenses = cloudData.externalExpenses || [];
+                    appData.collections = cloudData.collections || [];
+                    
+                    // حفظ محلياً
+                    saveToLocalStorage();
+                    
+                    if (cloudData.lastUpdate) {
+                        lastCloudSync = cloudData.lastUpdate;
+                        localStorage.setItem('sahab_last_sync', lastCloudSync);
+                    }
+                    
+                    console.log("✅ تم تحميل البيانات من Upstash Redis");
+                    showCloudSyncIndicator('success');
+                    renderDashboard();
+                    renderTree();
+                    return;
+                }
+            } catch (e) {
+                console.error("⚠️ فشل الاتصال بـ Upstash:", e.message);
+                showCloudSyncIndicator('error', e.message);
+            }
+        }
+
+        // 2. تحميل من التخزين المحلي
+        try {
+            const localRegions = localStorage.getItem('sahab_regions');
+            const localCustomers = localStorage.getItem('sahab_customers');
+            const localExpenses = localStorage.getItem('sahab_expenses');
+            const localExtExpenses = localStorage.getItem('sahab_external_expenses');
+            const localCollections = localStorage.getItem('sahab_collections');
+            
+            if (localRegions) appData.regions = JSON.parse(localRegions);
+            if (localCustomers) appData.customers = JSON.parse(localCustomers);
+            if (localExpenses) appData.expenses = JSON.parse(localExpenses);
+            if (localExtExpenses) appData.externalExpenses = JSON.parse(localExtExpenses);
+            if (localCollections) appData.collections = JSON.parse(localCollections);
+            
+            console.log("✅ تم تحميل البيانات من التخزين المحلي");
+        } catch (e) {
+            console.error("⚠️ خطأ في تحميل البيانات المحلية:", e.message);
+            // تهيئة بيانات فارغة كحل أخير
+            appData = {
+                regions: [],
+                customers: [],
+                expenses: [],
+                externalExpenses: [],
+                collections: [],
+                selected: { type: null, id: null, rid: null, bid: null, ucode: null, index: null },
+                currentView: 'dashboard'
+            };
+        }
+        
+        renderDashboard();
+        renderTree();
+    } catch (error) {
+        console.error("❌ خطأ حرج في initializeData:", error);
+        alert("حدث خطأ في تحميل البيانات. سيتم تهيئة النظام ببيانات فارغة.");
+        renderDashboard();
+        renderTree();
+    }
+}
+
+/**
+ * حفظ البيانات محلياً
+ */
+function saveToLocalStorage() {
+    try {
+        localStorage.setItem('sahab_regions', JSON.stringify(appData.regions));
+        localStorage.setItem('sahab_customers', JSON.stringify(appData.customers));
+        localStorage.setItem('sahab_expenses', JSON.stringify(appData.expenses));
+        localStorage.setItem('sahab_external_expenses', JSON.stringify(appData.externalExpenses));
+        localStorage.setItem('sahab_collections', JSON.stringify(appData.collections));
+        localStorage.setItem('sahab_last_modified', new Date().toISOString());
+    } catch (error) {
+        console.error('LocalStorage Save Error:', error);
+    }
+}
+
+/**
+ * حفظ البيانات (محلي + سحابي)
+ * استبدل وظيفة saveData() القديمة بهذه
+ */
+function saveData() {
+    try {
+        // 1. التحقق من صحة البيانات
+        if (!appData.regions || !Array.isArray(appData.regions)) {
+            throw new Error('بيانات المناطق غير صحيحة');
+        }
+        
+        // 2. حفظ في localStorage
+        saveToLocalStorage();
+        
+        // 3. عرض مؤشر النجاح
+        showAutoSaveIndicator();
+        
+        // 4. مزامنة Upstash (مع debounce)
+        if (upstashConfig.enabled) {
+            clearTimeout(window._syncTimeout);
+            window._syncTimeout = setTimeout(() => saveToUpstash(), 3000);
+        }
+        
+        // 5. تحديث UI
+        checkNotifications();
+        renderTree();
+        
+        return true;
+    } catch (error) {
+        console.error('Save Error:', error);
+        showError('فشل الحفظ', error.message);
+        return false;
+    }
+}
+
+/**
+ * عرض مؤشر الحفظ التلقائي المحلي
+ */
+function showAutoSaveIndicator() {
+    const oldIndicator = document.getElementById('auto-save-indicator');
+    if (oldIndicator) oldIndicator.remove();
+    
+    const indicator = document.createElement('div');
+    indicator.id = 'auto-save-indicator';
+    indicator.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #27ae60;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 25px;
+        font-size: 12px;
+        font-weight: bold;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        animation: slideIn 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        z-index: 10001;
+    `;
+    indicator.innerHTML = '✅ تم الحفظ';
+    document.body.appendChild(indicator);
+    
+    setTimeout(() => {
+        indicator.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => indicator.remove(), 300);
+    }, 2000);
+}
+
+/**
+ * عرض رسالة خطأ
+ */
+function showError(title, details = '') {
+    const popup = document.createElement('div');
+    popup.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        z-index: 10002;
+        min-width: 300px;
+        border: 3px solid #e74c3c;
+    `;
+    popup.innerHTML = `
+        <div style="text-align: center;">
+            <div style="font-size: 48px; color: #e74c3c;">❌</div>
+            <strong style="color: #e74c3c; font-size: 18px;">${title}</strong>
+            ${details ? `<div style="margin-top: 10px; color: #666; font-size: 12px;">${details}</div>` : ''}
+            <button onclick="this.parentElement.parentElement.remove()" style="margin-top: 15px; padding: 10px 20px; background: #e74c3c; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">إغلاق</button>
+        </div>
+    `;
+    document.body.appendChild(popup);
+    
+    setTimeout(() => popup.remove(), 5000);
+}
+
+/**
+ * تحسين processFlexibleCollection مع تسجيل السداد الجزئي
+ * استبدل وظيفة processFlexibleCollection() القديمة بهذه
+ */
+function processFlexibleCollection(custIndex) {
+    try {
+        let amount = parseFloat(document.getElementById('collectAmt').value);
+        let collectDate = document.getElementById('collectDate').value;
+        
+        if(!amount || amount <= 0) return alert("❌ يرجى إدخال مبلغ صحيح");
+        if(!collectDate) return alert("❌ يرجى اختيار التاريخ");
+
+        let c = appData.customers[custIndex];
+        let remainingToPay = amount;
+        let paidCount = 0;
+
+        // تسجيل التحصيل
+        let collectionRecord = {
+            id: Date.now(),
+            customerIndex: custIndex,
+            customerName: c.name,
+            building: c.building,
+            region: c.region,
+            unit: c.unit,
+            amount: amount,
+            date: collectDate,
+            status: 'completed',
+            createdAt: new Date().toISOString()
+        };
+        
+        appData.collections.push(collectionRecord);
+
+        // معالجة التحصيل مع تسجيل السداد الجزئي
+        for(let i=0; i<c.installments.length; i++) {
+            if(remainingToPay <= 0) break;
+            if(c.installments[i].status === 'pending') {
+                if(remainingToPay >= c.installments[i].a) {
+                    // سداد كامل
+                    remainingToPay -= c.installments[i].a;
+                    c.installments[i].status = 'paid';
+                    c.installments[i].paidDate = collectDate;
+                    paidCount++;
+                } else {
+                    // سداد جزئي - تسجيله في partialPayments
+                    if (!c.installments[i].partialPayments) {
+                        c.installments[i].partialPayments = [];
+                    }
+                    c.installments[i].partialPayments.push({
+                        amount: remainingToPay,
+                        date: collectDate,
+                        remaining: c.installments[i].a - remainingToPay
+                    });
+                    c.installments[i].a = Math.round((c.installments[i].a - remainingToPay) * 100) / 100;
+                    c.installments[i].t = c.installments[i].t.replace(' (متبقي)', '') + ' (متبقي)';
+                    remainingToPay = 0;
+                }
+            }
+        }
+        
+        saveData();
+        
+        let totalPaid = c.installments.filter(x => x.status === 'paid').reduce((s,x)=>s+x.a, 0);
+        let totalPending = c.installments.filter(x => x.status === 'pending').reduce((s,x)=>s+x.a, 0);
+
+        let message = `✅ تم تسجيل التحصيل بنجاح!\n\n`;
+        message += `📊 التفاصيل:\n`;
+        message += `• المبلغ المدفوع: ${amount.toLocaleString()}\n`;
+        message += `• عدد الأقساط المسددة كاملاً: ${paidCount}\n`;
+        message += `• إجمالي المسدد: ${totalPaid.toLocaleString()}\n`;
+        message += `• إجمالي المتبقي: ${totalPending.toLocaleString()}\n`;
+        message += `• التاريخ: ${collectDate}\n`;
+        
+        alert(message);
+        viewCustomerDetail(custIndex);
+    } catch (error) {
+        console.error('Collection Error:', error);
+        showError('خطأ في التحصيل', error.message);
+    }
+}
+
+/**
+ * تحسين processInstallments مع معالجة الأخطاء
+ * أضف try-catch للوظيفة الموجودة
+ */
+function processInstallments(editIndex = null) {
+    try {
+        // الكود الموجود حالياً...
+        // أضف فقط try-catch wrapper حول الكود بالكامل
+        
+    } catch (error) {
+        console.error('Process Installments Error:', error);
+        showError('خطأ في معالجة البيانات', error.message);
+    }
+}
+
+/**
+ * تحديث يدوي من Upstash
+ */
+async function manualSyncFromCloud() {
+    if (!upstashConfig.enabled || !upstashConfig.token) {
+        return alert('❌ Upstash غير مفعّل. اطلب من Admin ضبط الإعدادات.');
+    }
+    const btn = document.getElementById('sync-cloud-btn');
+    if (btn) { btn.disabled = true; btn.innerText = '⏳ جاري التحميل...'; }
+    
+    try {
+        const cloudData = await loadFromUpstash();
+        if (cloudData && cloudData.regions) {
+            appData.regions = cloudData.regions;
+            appData.customers = cloudData.customers;
+            appData.expenses = cloudData.expenses;
+            appData.externalExpenses = cloudData.externalExpenses;
+            appData.collections = cloudData.collections;
+            
+            lastCloudSync = cloudData.lastUpdate || new Date().toISOString();
+            localStorage.setItem('sahab_last_sync', lastCloudSync);
+            saveToLocalStorage();
+            
+            renderDashboard();
+            renderTree();
+            renderSettings();
+            alert('✅ تم تحميل أحدث البيانات من السحابة بنجاح!\n\nآخر تحديث: ' + new Date(lastCloudSync).toLocaleString('ar-EG'));
+        } else {
+            alert('❌ لم يتم العثور على بيانات في السحابة');
+        }
+    } catch(e) {
+        alert('❌ خطأ: ' + e.message);
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerText = '☁️ تحديث البيانات من السحابة الآن'; }
+    }
+}
+
+/**
+ * اختبار الاتصال بـ Upstash
+ */
+async function testUpstashConnection(event) {
+    const testBtn = event ? event.target : null;
+    if (testBtn) { testBtn.disabled = true; testBtn.innerText = 'جاري الاختبار...'; }
+
+    try {
+        const response = await fetch(`${upstashConfig.url}/ping`, {
+            headers: {
+                'Authorization': `Bearer ${upstashConfig.token}`
+            }
+        });
+
+        if (response.ok) {
+            alert('✅ تم الاتصال بنجاح!\n\nUpstash Redis جاهز للاستخدام');
+            await initializeData();
+        } else {
+            alert('❌ فشل الاتصال! تأكد من الرمز (Token) والـ URL');
+        }
+    } catch (error) {
+        alert('❌ خطأ في الشبكة: ' + error.message);
+    } finally {
+        if (testBtn) { testBtn.disabled = false; testBtn.innerText = '🔌 اختبر الاتصال'; }
+    }
+}
+
+// === إضافة للإعدادات ===
+
+function renderSettings() {
+    appData.currentView = 'settings';
+    document.getElementById('current-command-text').innerText = currentUser === 'admin' ? "إعدادات النظام" : "حالة النظام والسحابة";
+
+    let syncStatus = upstashConfig.enabled
+        ? (lastCloudSync
+            ? '<span style="color:#27ae60;">✅ متصل — آخر تحديث: ' + new Date(lastCloudSync).toLocaleString('ar-EG') + '</span>'
+            : '<span style="color:#ff9800;">⚠️ مفعّل — لم يتم المزامنة بعد</span>')
+        : '<span style="color:#e74c3c;">❌ غير مفعّل</span>';
+
+    let totalPaid = 0;
+    appData.customers.forEach(function(c){ c.installments.forEach(function(i){ if(i.status==='paid') totalPaid+=i.a; }); });
+    let totalBuildings = appData.regions.reduce(function(s,r){ return s+r.buildings.length; }, 0);
+
+    let sharedHtml =
+        '<div class="installment-card">' +
+            '<h3 style="color:var(--sahab-red); margin-top:0;">☁️ حالة السحابة والبيانات</h3>' +
+            '<div style="background:#f0f8ff; border:2px solid #3498db; border-radius:12px; padding:15px; margin-bottom:15px;">' +
+                '<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">' +
+                    '<div style="background:#fff;padding:12px;border-radius:8px;border-right:4px solid var(--sahab-red);text-align:center;">' +
+                        '<small style="color:#666;">🏢 العمارات</small><br>' +
+                        '<strong style="font-size:20px;color:var(--sahab-red);">' + totalBuildings + '</strong>' +
+                    '</div>' +
+                    '<div style="background:#fff;padding:12px;border-radius:8px;border-right:4px solid #3498db;text-align:center;">' +
+                        '<small style="color:#666;">👥 العملاء</small><br>' +
+                        '<strong style="font-size:20px;color:#3498db;">' + appData.customers.length + '</strong>' +
+                    '</div>' +
+                    '<div style="background:#fff;padding:12px;border-radius:8px;border-right:4px solid #27ae60;text-align:center;">' +
+                        '<small style="color:#666;">💰 إجمالي المحصل</small><br>' +
+                        '<strong style="font-size:16px;color:#27ae60;">' + totalPaid.toLocaleString() + '</strong>' +
+                    '</div>' +
+                    '<div style="background:#fff;padding:12px;border-radius:8px;border-right:4px solid #ff9800;text-align:center;">' +
+                        '<small style="color:#666;">📋 التحصيلات</small><br>' +
+                        '<strong style="font-size:20px;color:#ff9800;">' + appData.collections.length + '</strong>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:12px;">' +
+                    '<small style="color:#666;">حالة الاتصال بالسحابة:</small><br>' +
+                    '<strong style="font-size:13px;">' + syncStatus + '</strong>' +
+                '</div>' +
+                '<button id="sync-cloud-btn" onclick="manualSyncFromCloud()" style="width:100%;padding:12px;background:var(--sahab-red);color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;font-size:14px;">☁️ تحديث البيانات من السحابة الآن</button>' +
+            '</div>' +
+        '</div>';
+
+    let adminHtml = '';
+    if (currentUser === 'admin') {
+        adminHtml =
+            '<div class="installment-card">' +
+                '<h3 style="color:var(--sahab-red);">⚙️ تغيير كلمات السر</h3>' +
+                '<div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">' +
+                    '<div><span class="field-label">كلمة سر Admin</span><input type="password" id="new-admin-pass" class="installment-input" value="' + passwords.admin + '"></div>' +
+                    '<div><span class="field-label">كلمة سر User</span><input type="password" id="new-viewer-pass" class="installment-input" value="' + passwords.viewer + '"></div>' +
+                '</div>' +
+                '<button onclick="updatePasswords()" style="width:100%;padding:12px;background:var(--sahab-green);color:white;border:none;border-radius:10px;font-weight:900;cursor:pointer;margin-top:20px;"><i class="fas fa-check" style="margin-left:8px;"></i>حفظ كلمات السر</button>' +
+            '</div>' +
+            '<div class="installment-card">' +
+                '<h3 style="color:var(--sahab-red);">🔧 إعدادات Upstash السحابة</h3>' +
+                '<div style="background:' + (upstashConfig.enabled ? '#e8f5e9' : '#f5f5f5') + '; border:2px solid ' + (upstashConfig.enabled ? '#27ae60' : '#ddd') + '; border-radius:15px; padding:15px; margin-bottom:15px;">' +
+                    '<div style="display:flex; align-items:center; gap:10px;">' +
+                        '<input type="checkbox" id="upstash-enable" ' + (upstashConfig.enabled ? 'checked' : '') + ' onchange="toggleUpstashSync()" style="width:20px;height:20px;cursor:pointer;">' +
+                        '<label style="cursor:pointer;font-size:14px;"><strong>تفعيل Upstash Cloud</strong><br><small style="color:#666;">كل تغيير يُحفظ تلقائياً ☁️</small></label>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="background:#e3f2fd;border:1px solid #2196F3;border-radius:10px;padding:12px;margin-bottom:15px;">' +
+                    '<strong style="color:#1976d2;display:block;margin-bottom:8px;">🔑 بيانات الاتصال (محفوظة):</strong>' +
+                    '<div style="font-size:12px;color:#666;">' +
+                        '<div style="margin-bottom:8px;">📍 URL: ' + upstashConfig.url + '</div>' +
+                        '<div style="margin-bottom:8px;">🔐 Token: AZPeAAInc... (مخفي)</div>' +
+                        '<div>💾 Key: ' + upstashConfig.key + '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<button onclick="testUpstashConnection(event)" style="width:100%;padding:12px;background:#3498db;color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;">🔌 اختبر الاتصال</button>' +
+            '</div>';
+    }
+
+    document.getElementById('main-content').innerHTML = sharedHtml + adminHtml;
+}
+
+function toggleUpstashSync() {
+    const checkbox = document.getElementById('upstash-enable');
+    upstashConfig.enabled = checkbox.checked;
+    localStorage.setItem('sahab_upstash_config', JSON.stringify(upstashConfig));
+    renderSettings();
+}
+
+console.log("✅ Upstash Integration Loaded Successfully!");
             function login() {
                 const type = document.getElementById('user-type').value;
                 const pass = document.getElementById('login-pass').value;
@@ -342,302 +897,7 @@ localStorage.setItem('sahab_github_config', JSON.stringify(githubConfig));
                 currentView: 'dashboard'
             };
 
-async function initializeData() {
-                // 1. محاولة جلب البيانات من السحابة (GitHub)
-                if (githubConfig.enabled && githubConfig.token) {
-                    try {
-                        console.log("🔄 جاري محاولة الاتصال بـ GitHub...");
-                        const response = await fetch(`https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${githubConfig.filePath}`, {
-                            headers: { 'Authorization': `token ${githubConfig.token}` }
-                        });
-                        
-                        if (response.ok) {
-                            const data = await response.json();
-                            const content = decodeURIComponent(escape(atob(data.content)));
-                            const cloudData = JSON.parse(content);
-                            
-                            // تحديث appData.regions بالبيانات من السحابة
-                            if (cloudData.regions && Array.isArray(cloudData.regions)) {
-                                appData.regions = cloudData.regions;
-                            }
-                            if (cloudData.customers && Array.isArray(cloudData.customers)) {
-                                appData.customers = cloudData.customers;
-                            }
-                            if (cloudData.expenses && Array.isArray(cloudData.expenses)) {
-                                appData.expenses = cloudData.expenses;
-                            }
-                            if (cloudData.externalExpenses && Array.isArray(cloudData.externalExpenses)) {
-                                appData.externalExpenses = cloudData.externalExpenses;
-                            }
-                            if (cloudData.collections && Array.isArray(cloudData.collections)) {
-                                appData.collections = cloudData.collections;
-                            }
-                            
-                            // حفظ محلياً
-                            localStorage.setItem('sahab_regions', JSON.stringify(appData.regions));
-                            localStorage.setItem('sahab_customers', JSON.stringify(appData.customers));
-                            localStorage.setItem('sahab_expenses', JSON.stringify(appData.expenses));
-                            localStorage.setItem('sahab_external_expenses', JSON.stringify(appData.externalExpenses));
-                            localStorage.setItem('sahab_collections', JSON.stringify(appData.collections));
-                            
-                            if (cloudData.lastUpdate) {
-                                lastGitHubSync = cloudData.lastUpdate;
-                                localStorage.setItem('sahab_last_sync', lastGitHubSync);
-                            }
-                            console.log("✅ تم تحميل البيانات من GitHub");
-                            showGitHubSyncIndicator('success');
-                            renderDashboard();
-                            renderTree();
-                            return; 
-                        } else if (response.status === 404) {
-                            console.log("ℹ️ الملف data.json غير موجود على GitHub - سيتم إنشاء ملف جديد عند第一次 حفظ");
-                        }
-                    } catch (e) {
-                        console.log("⚠️ فشل الاتصال بـ GitHub: " + e.message);
-                    }
-                }
-
-                // 2. تحميل من التخزين المحلي
-                try {
-                    const localRegions = localStorage.getItem('sahab_regions');
-                    const localCustomers = localStorage.getItem('sahab_customers');
-                    const localExpenses = localStorage.getItem('sahab_expenses');
-                    const localExtExpenses = localStorage.getItem('sahab_external_expenses');
-                    const localCollections = localStorage.getItem('sahab_collections');
-                    
-                    if (localRegions) appData.regions = JSON.parse(localRegions);
-                    if (localCustomers) appData.customers = JSON.parse(localCustomers);
-                    if (localExpenses) appData.expenses = JSON.parse(localExpenses);
-                    if (localExtExpenses) appData.externalExpenses = JSON.parse(localExtExpenses);
-                    if (localCollections) appData.collections = JSON.parse(localCollections);
-                    
-                    console.log("✅ تم تحميل البيانات من التخزين المحلي");
-                } catch (e) {
-                    console.log("⚠️ خطأ في تحميل البيانات المحلية: " + e.message);
-                }
-                
-                renderDashboard();
-                renderTree();
-            }
-
-function saveData() {
-                // حفظ تلقائي في localStorage
-                localStorage.setItem('sahab_regions', JSON.stringify(appData.regions));
-                localStorage.setItem('sahab_customers', JSON.stringify(appData.customers));
-                localStorage.setItem('sahab_expenses', JSON.stringify(appData.expenses));
-                localStorage.setItem('sahab_external_expenses', JSON.stringify(appData.externalExpenses));
-                localStorage.setItem('sahab_collections', JSON.stringify(appData.collections));
-                
-                // تحديث البيانات المدمجة للملف
-                embeddedDataJson = JSON.stringify({
-                    regions: appData.regions,
-                    customers: appData.customers,
-                    expenses: appData.expenses,
-                    externalExpenses: appData.externalExpenses,
-                    collections: appData.collections,
-                    lastUpdate: new Date().toISOString()
-                }, null, 2);
-                
-                // عرض مؤشر الحفظ التلقائي
-                showAutoSaveIndicator();
-                
-                // محاولة الحفظ على GitHub إذا كان مفعلاً
-                if (githubConfig.enabled && githubConfig.token) {
-                    syncDataToGitHub();
-                }
-                
-                checkNotifications();
-                renderTree();
-            }
-
-            function showAutoSaveIndicator() {
-                // إزالة أي مؤشر حفظ سابق
-                const oldIndicator = document.getElementById('auto-save-indicator');
-                if (oldIndicator) oldIndicator.remove();
-                
-                // إنشاء مؤشر حفظ جديد
-                const indicator = document.createElement('div');
-                indicator.id = 'auto-save-indicator';
-                indicator.style.cssText = `
-                    position: fixed;
-                    bottom: 20px;
-                    right: 20px;
-                    background: #27ae60;
-                    color: white;
-                    padding: 10px 15px;
-                    border-radius: 25px;
-                    font-size: 12px;
-                    font-weight: bold;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-                    animation: slideIn 0.3s ease;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    z-index: 10001;
-                `;
-                indicator.innerHTML = '✅ تم الحفظ';
-                document.body.appendChild(indicator);
-                
-                // إزالة المؤشر بعد 2 ثانية
-                setTimeout(() => {
-                    indicator.style.animation = 'slideOut 0.3s ease';
-                    setTimeout(() => indicator.remove(), 300);
-                }, 2000);
-            }
-
-            // --- دوال GitHub Cloud Sync ---
-            async function syncDataToGitHub() {
-                if (!githubConfig.enabled || !githubConfig.token) return;
-                if (gitHubSyncInProgress) return; // تجنب التزامن المتعدد
-                
-                gitHubSyncInProgress = true;
-                showGitHubSyncIndicator('syncing');
-                
-                try {
-                    // إنشاء الملف HTML مع البيانات المدمجة
-                    const fileContent = await generateHtmlWithData();
-                    const encodedContent = btoa(unescape(encodeURIComponent(fileContent)));
-                    
-                    // الحصول على SHA الحالي (للتحديث)
-                    let sha = null;
-                    try {
-                        const getResponse = await fetch(
-                            `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${githubConfig.filePath}?ref=${githubConfig.branch}`,
-                            {
-                                method: 'GET',
-                                headers: {
-                                    'Authorization': `token ${githubConfig.token}`,
-                                    'Accept': 'application/vnd.github.v3+json'
-                                }
-                            }
-                        );
-                        
-                        if (getResponse.ok) {
-                            const data = await getResponse.json();
-                            sha = data.sha;
-                        }
-                    } catch (e) {
-                        console.log('File does not exist yet - will create new');
-                    }
-                    
-                    // تحميل أو تحديث الملف
-                    const commitMessage = `📊 تحديث بيانات SAHAB - ${new Date().toLocaleString('ar-EG')} (العملاء: ${appData.customers.length}, التحصيلات: ${appData.collections.length})`;
-                    
-                    const body = {
-                        message: commitMessage,
-                        content: encodedContent,
-                        branch: githubConfig.branch,
-                        committer: {
-                            name: 'SAHAB Auto Backup',
-                            email: 'backup@sahab.local'
-                        }
-                    };
-                    
-                    if (sha) {
-                        body.sha = sha;
-                    }
-                    
-                    const response = await fetch(
-                        `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${githubConfig.filePath}`,
-                        {
-                            method: 'PUT',
-                            headers: {
-                                'Authorization': `token ${githubConfig.token}`,
-                                'Accept': 'application/vnd.github.v3+json',
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(body)
-                        }
-                    );
-                    
-                    if (response.ok) {
-                        lastGitHubSync = new Date().toISOString();
-                        localStorage.setItem('sahab_last_sync', lastGitHubSync);
-                        showGitHubSyncIndicator('success');
-                    } else {
-                        const error = await response.json();
-                        console.error('GitHub sync error:', error);
-                        showGitHubSyncIndicator('error', error.message);
-                        alert("⚠️ فشل الحفظ على GitHub: " + (error.message || "تأكد من إعدادات الـ Token واسم المستودع"));
-                    }
-                } catch (error) {
-                    console.error('Sync failed:', error);
-                    showGitHubSyncIndicator('error', error.message);
-                } finally {
-                    gitHubSyncInProgress = false;
-                }
-            }
-
-            async function generateHtmlWithData() {
-                // الحصول على محتوى الملف الحالي
-                const response = await fetch(window.location.href);
-                let htmlContent = await response.text();
-                
-                // إعداد البيانات
-                const finalData = {
-                    regions: appData.regions,
-                    customers: appData.customers,
-                    expenses: appData.expenses,
-                    externalExpenses: appData.externalExpenses,
-                    collections: appData.collections,
-                    lastUpdate: new Date().toISOString()
-                };
-                
-                const escapedData = JSON.stringify(finalData, null, 2)
-                    .replace(/`/g, '\\`')
-                    .replace(/\$/g, '\\$');
-                
-                // تحديث embeddedDataJson
-                htmlContent = htmlContent.replace(
-                    /let embeddedDataJson = `[\s\S]*?`;/,
-                    `let embeddedDataJson = \`${escapedData}\`;`
-                );
-                
-                return htmlContent;
-            }
-
-            function showGitHubSyncIndicator(status, message = '') {
-                const oldIndicator = document.getElementById('github-sync-indicator');
-                if (oldIndicator) oldIndicator.remove();
-                
-                let colors = {
-                    'syncing': { bg: '#3498db', text: '⏳ جاري الحفظ على GitHub...' },
-                    'success': { bg: '#27ae60', text: '☁️ تم الحفظ على GitHub' },
-                    'error': { bg: '#e74c3c', text: '❌ خطأ في الحفظ' }
-                };
-                
-                const config = colors[status] || colors['syncing'];
-                
-                const indicator = document.createElement('div');
-                indicator.id = 'github-sync-indicator';
-                indicator.style.cssText = `
-                    position: fixed;
-                    bottom: 60px;
-                    right: 20px;
-                    background: ${config.bg};
-                    color: white;
-                    padding: 12px 18px;
-                    border-radius: 25px;
-                    font-size: 12px;
-                    font-weight: bold;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-                    animation: slideIn 0.3s ease;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    z-index: 10001;
-                `;
-                indicator.innerHTML = config.text;
-                document.body.appendChild(indicator);
-                
-                if (status !== 'syncing') {
-                    setTimeout(() => {
-                        indicator.style.animation = 'slideOut 0.3s ease';
-                        setTimeout(() => indicator.remove(), 300);
-                    }, 3000);
-                }
-            }
-
+////
             function generateSahabUnits(customUnits = null) {
                 if (customUnits) return JSON.parse(JSON.stringify(customUnits));
                 let units = [];
@@ -811,10 +1071,13 @@ function saveData() {
                 document.getElementById('main-content').innerHTML = html;
             }
 
-            function renderUnitBox(u, rid, bid) {
-                let color = u.status === 'available' ? 'var(--sahab-green)' : 'var(--sahab-red)';
-                let customer = appData.customers.find(c => c.unit === u.code && c.building === appData.regions.find(r=>r.id===rid).buildings.find(b=>b.id===bid).name);
-                let dblClick = u.status === 'available' ? `executeAction('إضافة')` : `viewCustomerDetail(${appData.customers.indexOf(customer)})`;
+  function renderUnitBox(u, rid, bid) {
+  let color = u.status === 'available' ? 'var(--sahab-green)' : 'var(--sahab-red)';
+  let region = appData.regions.find(r=>r.id===rid);
+  let building = region ? region.buildings.find(b=>b.id===bid) : null;
+  let buildingName = building ? building.name : '';
+  let customer = appData.customers.find(c => c.unit === u.code && c.building === buildingName);
+  let dblClick = u.status === 'available' ? `executeAction('إضافة')` : `viewCustomerDetail(${appData.customers.indexOf(customer)})`;
                 return `<div class="unit-box" style="background:${color};" onclick="handleItemClick(this, 'unit', '${u.code}', ${rid}, ${bid})" ondblclick="${dblClick}">
                     <span style="font-size:14px;">${u.code}</span>
                     <small style="font-size:8px;">${u.type}</small>
@@ -2384,13 +2647,14 @@ function saveData() {
 
             function exportBackup() {
                 // تصدير جميع البيانات الحالية إلى ملف JSON
-                const dataToExport = {
-                    timestamp: new Date().toISOString(),
-                    regions: appData.regions,
-                    customers: appData.customers,
-                    expenses: appData.expenses,
-                    externalExpenses: appData.externalExpenses
-                };
+  const dataToExport = {
+  timestamp: new Date().toISOString(),
+  regions: appData.regions,
+  customers: appData.customers,
+  expenses: appData.expenses,
+  externalExpenses: appData.externalExpenses,
+  collections: appData.collections || []
+  };
                 
                 const dataStr = JSON.stringify(dataToExport, null, 2);
                 const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
@@ -2464,17 +2728,15 @@ function saveData() {
                         
                         // التحقق من صحة الملف
                         if (imported.regions !== undefined && imported.customers !== undefined) {
-                            appData.regions = imported.regions || [];
-                            appData.customers = imported.customers || [];
-                            appData.expenses = imported.expenses || [];
-                            appData.externalExpenses = imported.externalExpenses || [];
+  appData.regions = imported.regions || [];
+  appData.customers = imported.customers || [];
+  appData.expenses = imported.expenses || [];
+  appData.externalExpenses = imported.externalExpenses || [];
+  appData.collections = imported.collections || [];
                             
-saveData();
-                            // التعديل هنا يا أبو عمر: سنحدث البيانات فوراً بدلاً من إعادة تحميل الصفحة
-               saveData();
-                            // التعديل هنا يا أبو عمر: سنحدث البيانات فوراً بدلاً من إعادة تحميل الصفحة
-                            renderBuildings(); 
-                            alert("✅ تم استيراد البيانات وتحديثها بنجاح!");
+  saveData();
+  renderDashboard();
+  alert("تم استيراد البيانات وتحديثها بنجاح!");
                             // حذفنا سطر location.reload() لكي لا يطردك المتصفح من تسجيل الدخول
                         } else {
                             alert("❌ ملف غير صحيح! تأكد من الملف المستورد");
@@ -2553,86 +2815,6 @@ saveData();
                 });
             }
 
-            async function manualSyncFromCloud() {
-                if (!githubConfig.enabled || !githubConfig.token) {
-                    return alert('❌ GitHub غير مفعّل. اطلب من Admin ضبط الإعدادات.');
-                }
-                const btn = document.getElementById('sync-cloud-btn');
-                if (btn) { btn.disabled = true; btn.innerText = '⏳ جاري التحميل...'; }
-                try {
-                    const response = await fetch(
-                        'https://api.github.com/repos/' + githubConfig.owner + '/' + githubConfig.repo + '/contents/' + githubConfig.filePath,
-                        { headers: { 'Authorization': 'token ' + githubConfig.token } }
-                    );
-                    if (response.ok) {
-                        const data = await response.json();
-                        const raw = decodeURIComponent(escape(atob(data.content)));
-                        const cloudData = JSON.parse(raw);
-                        if (cloudData.regions)           appData.regions           = cloudData.regions;
-                        if (cloudData.customers)         appData.customers         = cloudData.customers;
-                        if (cloudData.expenses)          appData.expenses          = cloudData.expenses;
-                        if (cloudData.externalExpenses)  appData.externalExpenses  = cloudData.externalExpenses;
-                        if (cloudData.collections)       appData.collections       = cloudData.collections;
-                        lastGitHubSync = cloudData.lastUpdate || new Date().toISOString();
-                        localStorage.setItem('sahab_last_sync', lastGitHubSync);
-                        localStorage.setItem('sahab_regions',   JSON.stringify(appData.regions));
-                        localStorage.setItem('sahab_customers', JSON.stringify(appData.customers));
-                        renderDashboard(); renderTree(); renderSettings();
-                        alert('✅ تم تحميل أحدث البيانات من السحابة بنجاح!\n\nآخر تحديث: ' + new Date(lastGitHubSync).toLocaleString('ar-EG'));
-                    } else {
-                        alert('❌ تعذر الاتصال بـ GitHub. تأكد من الاتصال بالإنترنت.');
-                    }
-                } catch(e) {
-                    alert('❌ خطأ: ' + e.message);
-                } finally {
-                    if (btn) { btn.disabled = false; btn.innerText = '☁️ تحديث البيانات من السحابة الآن'; }
-                }
-            }
-
-            function renderSettings() {
-                appData.currentView = 'settings';
-                document.getElementById('current-command-text').innerText = currentUser === 'admin' ? "إعدادات النظام" : "حالة النظام والسحابة";
-
-                let syncStatus = githubConfig.enabled
-                    ? (lastGitHubSync
-                        ? '<span style="color:#27ae60;">✅ متصل — آخر تحديث: ' + new Date(lastGitHubSync).toLocaleString('ar-EG') + '</span>'
-                        : '<span style="color:#ff9800;">⚠️ مفعّل — لم يتم المزامنة بعد</span>')
-                    : '<span style="color:#e74c3c;">❌ غير مفعّل</span>';
-
-                let totalPaid = 0;
-                appData.customers.forEach(function(c){ c.installments.forEach(function(i){ if(i.status==='paid') totalPaid+=i.a; }); });
-                let totalBuildings = appData.regions.reduce(function(s,r){ return s+r.buildings.length; }, 0);
-
-                // ===== القسم المشترك: حالة السحابة والبيانات =====
-                let sharedHtml =
-                    '<div class="installment-card">' +
-                        '<h3 style="color:var(--sahab-red); margin-top:0;">☁️ حالة السحابة والبيانات</h3>' +
-                        '<div style="background:#f0f8ff; border:2px solid #3498db; border-radius:12px; padding:15px; margin-bottom:15px;">' +
-                            '<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">' +
-                                '<div style="background:#fff;padding:12px;border-radius:8px;border-right:4px solid var(--sahab-red);text-align:center;">' +
-                                    '<small style="color:#666;">🏢 العمارات</small><br>' +
-                                    '<strong style="font-size:20px;color:var(--sahab-red);">' + totalBuildings + '</strong>' +
-                                '</div>' +
-                                '<div style="background:#fff;padding:12px;border-radius:8px;border-right:4px solid #3498db;text-align:center;">' +
-                                    '<small style="color:#666;">👥 العملاء</small><br>' +
-                                    '<strong style="font-size:20px;color:#3498db;">' + appData.customers.length + '</strong>' +
-                                '</div>' +
-                                '<div style="background:#fff;padding:12px;border-radius:8px;border-right:4px solid #27ae60;text-align:center;">' +
-                                    '<small style="color:#666;">💰 إجمالي المحصل</small><br>' +
-                                    '<strong style="font-size:16px;color:#27ae60;">' + totalPaid.toLocaleString() + '</strong>' +
-                                '</div>' +
-                                '<div style="background:#fff;padding:12px;border-radius:8px;border-right:4px solid #ff9800;text-align:center;">' +
-                                    '<small style="color:#666;">📋 التحصيلات</small><br>' +
-                                    '<strong style="font-size:20px;color:#ff9800;">' + appData.collections.length + '</strong>' +
-                                '</div>' +
-                            '</div>' +
-                            '<div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:12px;">' +
-                                '<small style="color:#666;">حالة الاتصال بالسحابة:</small><br>' +
-                                '<strong style="font-size:13px;">' + syncStatus + '</strong>' +
-                            '</div>' +
-                            '<button id="sync-cloud-btn" onclick="manualSyncFromCloud()" style="width:100%;padding:12px;background:var(--sahab-red);color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;font-size:14px;">☁️ تحديث البيانات من السحابة الآن</button>' +
-                        '</div>' +
-                    '</div>';
 
                 // ===== قسم Admin فقط =====
                 let adminHtml = '';
@@ -2641,124 +2823,38 @@ saveData();
                         '<div class="installment-card">' +
                             '<h3 style="color:var(--sahab-red);">⚙️ تغيير كلمات السر</h3>' +
                             '<div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">' +
-                                '<div><span class="field-label">كلمة سر Admin</span><input type="text" id="new-admin-pass" class="installment-input" value="' + passwords.admin + '"></div>' +
-                                '<div><span class="field-label">كلمة سر User</span><input type="text" id="new-viewer-pass" class="installment-input" value="' + passwords.viewer + '"></div>' +
+                                '<div><span class="field-label">كلمة سر Admin</span><input type="password" id="new-admin-pass" class="installment-input" value="' + passwords.admin + '"></div>' +
+                                '<div><span class="field-label">كلمة سر User</span><input type="password" id="new-viewer-pass" class="installment-input" value="' + passwords.viewer + '"></div>' +
                             '</div>' +
                             '<button onclick="updatePasswords()" style="width:100%;padding:12px;background:var(--sahab-green);color:white;border:none;border-radius:10px;font-weight:900;cursor:pointer;margin-top:20px;"><i class="fas fa-check" style="margin-left:8px;"></i>حفظ كلمات السر</button>' +
-                        '</div>' +
-                        '<div class="installment-card">' +
-                            '<h3 style="color:var(--sahab-red);">🔧 إعدادات GitHub السحابة</h3>' +
-                            '<div style="background:' + (githubConfig.enabled ? '#e8f5e9' : '#f5f5f5') + '; border:2px solid ' + (githubConfig.enabled ? '#27ae60' : '#ddd') + '; border-radius:15px; padding:15px; margin-bottom:15px;">' +
-                                '<div style="display:flex; align-items:center; gap:10px;">' +
-                                    '<input type="checkbox" id="github-enable" ' + (githubConfig.enabled ? 'checked' : '') + ' onchange="toggleGithubSync()" style="width:20px;height:20px;cursor:pointer;">' +
-                                    '<label style="cursor:pointer;font-size:14px;"><strong>تفعيل GitHub Cloud</strong><br><small style="color:#666;">كل تغيير يُحفظ تلقائياً ☁️</small></label>' +
-                                '</div>' +
-                            '</div>' +
-                            '<div id="github-config" style="display:' + (githubConfig.enabled ? 'block' : 'none') + ';">' +
-                                '<div style="background:#e3f2fd;border:1px solid #2196F3;border-radius:10px;padding:12px;margin-bottom:15px;">' +
-                                    '<strong style="color:#1976d2;display:block;margin-bottom:8px;">🔑 بيانات الاتصال:</strong>' +
-                                    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12px;">' +
-                                        '<div><small style="color:#666;">اسم المستخدم</small><input type="text" id="github-owner" class="installment-input" value="' + githubConfig.owner + '" style="font-size:12px;"></div>' +
-                                        '<div><small style="color:#666;">اسم المستودع</small><input type="text" id="github-repo" class="installment-input" value="' + githubConfig.repo + '" style="font-size:12px;"></div>' +
-                                        '<div style="grid-column:1/-1;"><small style="color:#666;">Personal Access Token</small><input type="password" id="github-token" class="installment-input" value="' + githubConfig.token + '" style="font-size:12px;"></div>' +
-                                        '<div><small style="color:#666;">Branch</small><input type="text" id="github-branch" class="installment-input" value="' + githubConfig.branch + '" style="font-size:12px;"></div>' +
-                                        '<div><small style="color:#666;">مسار الملف</small><input type="text" id="github-filepath" class="installment-input" value="' + githubConfig.filePath + '" style="font-size:12px;"></div>' +
-                                    '</div>' +
-                                '</div>' +
-                                '<button onclick="saveGithubConfig()" style="width:100%;padding:12px;background:#27ae60;color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;margin-bottom:10px;">💾 حفظ إعدادات GitHub</button>' +
-                                '<button onclick="testGithubConnection()" style="width:100%;padding:12px;background:#3498db;color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;">🔌 اختبر الاتصال</button>' +
-                            '</div>' +
                         '</div>' +
                         '<div class="installment-card">' +
                             '<h3 style="color:var(--sahab-red);">📦 النسخ الاحتياطية</h3>' +
                             '<div style="display:flex;flex-direction:column;gap:10px;">' +
                                 '<button onclick="exportBackup()" style="width:100%;padding:12px;background:#9b59b6;color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;">📥 تصدير نسخة احتياطية</button>' +
-                                '<button onclick="document.getElementById(\"settingsImportFile\").click()" style="width:100%;padding:12px;background:#e67e22;color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;">📤 استيراد نسخة احتياطية</button>' +
+                                '<button onclick="document.getElementById(\'settingsImportFile\').click()" style="width:100%;padding:12px;background:#e67e22;color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;">استيراد نسخة احتياطية</button>' +
                                 '<input type="file" id="settingsImportFile" style="display:none" accept=".json" onchange="handleImport(event)">' +
                             '</div>' +
                         '</div>';
                 }
 
                 document.getElementById('main-content').innerHTML = sharedHtml + adminHtml;
-            }
-
-            function toggleGithubSync() {
-                const checkbox = document.getElementById('github-enable');
-                const configDiv = document.getElementById('github-config');
-                if (checkbox.checked) {
-                    configDiv.style.display = 'block';
-                } else {
-                    configDiv.style.display = 'none';
-                }
-            }
-
-            function saveGithubConfig() {
-                const owner = document.getElementById('github-owner').value.trim();
-                const repo = document.getElementById('github-repo').value.trim();
-                const token = document.getElementById('github-token').value.trim();
-                const branch = document.getElementById('github-branch').value.trim() || 'main';
-                const filePath = document.getElementById('github-filepath').value.trim() || 'sahab_data.html';
+            
                 
-                if (!owner || !repo || !token) {
-                    return alert('❌ يرجى ملء جميع الحقول المطلوبة');
-                }
-            // --- تثبيت بيانات شركة سحاب للتطوير العقاري ---
-githubConfig = {
-    enabled: true,
-    owner: 'DrJOO4CODEING', 
-    repo: 'SAHAB-REAL-EST', // هذا هو الاسم الصحيح الذي ظهر في صورتك الثانية
-    token: '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',
-    branch: 'main',
-    filePath: 'data.json' // الملف الذي يحتوي على العمارات والوحدات
-};
-
-// حفظ الإعدادات في ذاكرة المتصفح ليعرفها البرنامج تلقائياً
-localStorage.setItem('sahab_github_config', JSON.stringify(githubConfig));    
-                localStorage.setItem('sahab_github_config', JSON.stringify(githubConfig));
-                alert('✅ تم حفظ إعدادات GitHub بنجاح!\n\nسيتم الحفظ على GitHub تلقائياً مع كل تغيير.');
+            function updateStats() {
+                const totalBuildings = appData.regions.reduce((sum, region) => sum + region.buildings.length, 0);
+                const elRegions = document.getElementById('stat-regions');
+                if (elRegions) elRegions.innerText = totalBuildings;
+                
+                const elCustomers = document.getElementById('stat-customers');
+                if (elCustomers) elCustomers.innerText = appData.customers.length;
+                
+                const elCollections = document.getElementById('stat-collections');
+                if (elCollections) elCollections.innerText = appData.collections.length;
+                
+                const elLastUpdate = document.getElementById('stat-lastupdate');
+                if (elLastUpdate) elLastUpdate.innerText = new Date().toLocaleTimeString('ar-EG');
             }
-async function testGithubConnection() {
-    const testBtn = event.target;
-    testBtn.disabled = true;
-    testBtn.innerText = '⌛ جاري الاختبار...';
-
-    try {
-        const response = await fetch(`https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}`, {
-            headers: {
-                'Authorization': `token ${githubConfig.token}`,
-                'Accept': 'application/vnd.github.v3+json'
-            }
-        });
-
-        if (response.ok) {
-            alert('✅ تم الاتصال بنجاح!\n\nالمستودع: ' + githubConfig.owner + '/' + githubConfig.repo);
-            // استدعاء جلب البيانات فوراً لملء الأصفار وتحويلها لأرقام حقيقية
-            await initializeData(); 
-        } else {
-            alert('❌ فشل الاتصال! تأكد من الرمز (Token) واسم المستودع');
-        }
-    } catch (error) {
-        alert('❌ خطأ في الشبكة: ' + error.message);
-    } finally {
-        testBtn.disabled = false;
-        testBtn.innerText = '🔌 اختبر الاتصال';
-    }
-}
-
-function updateStats() {
-    // تحديث عدد العمارات (إجمالي العمارات في جميع المناطق)
-    const totalBuildings = appData.regions.reduce((sum, region) => sum + region.buildings.length, 0);
-    document.getElementById('stat-regions').innerText = totalBuildings;
-
-    // تحديث عدد العملاء
-    document.getElementById('stat-customers').innerText = appData.customers.length;
-
-    // تحديث عدد التحصيلات
-    document.getElementById('stat-collections').innerText = appData.collections.length;
-
-    // تحديث وقت آخر تحديث
-    document.getElementById('stat-lastupdate').innerText = new Date().toLocaleTimeString('ar-EG');
-}
             function updatePasswords() {
                 const adminP = document.getElementById('new-admin-pass').value;
                 const viewerP = document.getElementById('new-viewer-pass').value;
@@ -2769,10 +2865,9 @@ function updateStats() {
                 alert('✅ تم تحديث كلمات السر بنجاح');
             }
 
-            window.onload = () => { 
-                initializeData();
-                checkNotifications(); 
-            };
+  window.onload = () => {
+  checkNotifications();
+  };
         </script>
     </body>
     </html>
