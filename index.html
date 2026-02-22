@@ -167,8 +167,8 @@
                 </div>
                 <div style="display: flex; align-items: center; gap: 10px; direction: ltr;">
                     <div style="text-align: right;">
-                        <div style="font-weight: 900; color: #e74c3c; font-size: 18px; line-height: 1;">سحاب للتطوير العقارى </div>
-                        <div style="font-size: 9px; color: #666; font-weight: bold;">SAHAB REAL ESTATES </div>
+                        <div style="font-weight: 900; color: #e74c3c; font-size: 18px; line-height: 1;">سحاب </div>
+                        <div style="font-size: 9px; color: #666; font-weight: bold;">SAHAB </div>
                     </div>
                     <div style="width:60px; height:60px; background: #fff; border-radius:10px; display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px solid #eee;">
                         <img src="https://i.postimg.cc/xqSdpmBX/lqtt-shasht-2026-02-12-035734.png" alt="Logo" style="width:100%; height:100%; object-fit:contain;">
@@ -203,8 +203,6 @@
                 <button class="cmd-btn" onclick="renderDashboard()" title="عرض ملخص النظام"><i class="fas fa-chart-line" style="margin-left: 8px;"></i>لوحة التحكم</button>
                 <button class="cmd-btn" onclick="executeAction('سجل العملاء')" title="عرض قائمة جميع العملاء"><i class="fas fa-list" style="margin-left: 8px;"></i>سجل العملاء</button>
                 <button class="cmd-btn" id="btn-collect" onclick="executeAction('تحصيل قسط')" style="border-right-color: var(--sahab-green);" title="تسجيل دفعات من العملاء"><i class="fas fa-coins" style="margin-left: 8px;"></i>تحصيل قسط</button>
-                <button class="cmd-btn" id="btn-import" onclick="document.getElementById('importFile').click()" style="border-right-color: var(--gold);" title="استرجاع نسخة سابقة"><i class="fas fa-upload" style="margin-left: 8px;"></i> استيراد</button>
-                <input type="file" id="importFile" style="display:none" onchange="handleImport(event)">
                 <button class="cmd-btn" onclick="renderCollectionsManager()" style="border-right-color: #ff9800;" title="إدارة وتعديل التحصيلات"><i class="fas fa-file-invoice-dollar" style="margin-left: 8px;"></i> إدارة التحصيلات</button>
                 <button class="cmd-btn" id="btn-settings" onclick="renderSettings()" style="border-right-color: #666;" title="تغيير إعدادات النظام"><i class="fas fa-cog" style="margin-left: 8px;"></i> الإعدادات</button>
                 <button class="cmd-btn" onclick="logout()" style="border-right-color: #000; background: #f9f9f9;" title="الخروج من النظام"><i class="fas fa-sign-out-alt" style="margin-left: 8px; color: #e74c3c;"></i> تسجيل الخروج</button>
@@ -663,21 +661,6 @@ function processFlexibleCollection(custIndex) {
 }
 
 /**
- * تحسين processInstallments مع معالجة الأخطاء
- * أضف try-catch للوظيفة الموجودة
- */
-function processInstallments(editIndex = null) {
-    try {
-        // الكود الموجود حالياً...
-        // أضف فقط try-catch wrapper حول الكود بالكامل
-        
-    } catch (error) {
-        console.error('Process Installments Error:', error);
-        showError('خطأ في معالجة البيانات', error.message);
-    }
-}
-
-/**
  * تحديث يدوي من Upstash
  */
 async function manualSyncFromCloud() {
@@ -815,7 +798,9 @@ function renderSettings() {
                     '</div>' +
                 '</div>' +
                 '<button onclick="testUpstashConnection(event)" style="width:100%;padding:12px;background:#3498db;color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;margin-bottom:10px;">🔌 اختبر الاتصال</button>' +
-                '<button onclick="exportBackup()" style="width:100%;padding:12px;background:#9b59b6;color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;"><i class="fas fa-download" style="margin-left:8px;"></i>تصدير نسخة احتياطية</button>' +
+                '<button onclick="exportBackup()" style="width:100%;padding:12px;background:#9b59b6;color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;margin-bottom:10px;"><i class="fas fa-download" style="margin-left:8px;"></i>تصدير نسخة احتياطية</button>' +
+                '<button onclick="document.getElementById(\'settingsImportFile2\').click()" style="width:100%;padding:12px;background:#e67e22;color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;"><i class="fas fa-upload" style="margin-left:8px;"></i>استيراد نسخة احتياطية</button>' +
+                '<input type="file" id="settingsImportFile2" style="display:none" accept=".json" onchange="handleImport(event)">' +
             '</div>';
     }
 
@@ -830,6 +815,28 @@ function toggleUpstashSync() {
 }
 
 console.log("✅ Upstash Integration Loaded Successfully!");
+
+            // دالة التحقق من كلمة سر Admin للعمليات الحساسة
+            function verifyAdminPassword(actionName) {
+                if (currentUser !== 'admin') {
+                    alert('❌ هذه العملية متاحة فقط للـ Admin');
+                    return false;
+                }
+                
+                const password = prompt(`🔐 تأكيد العملية: ${actionName}\n\nيرجى إدخال كلمة سر Admin للمتابعة:`);
+                
+                if (!password) {
+                    return false; // المستخدم ضغط إلغاء
+                }
+                
+                if (password !== passwords.admin) {
+                    alert('❌ كلمة السر غير صحيحة!\n\nتم إلغاء العملية.');
+                    return false;
+                }
+                
+                return true; // كلمة السر صحيحة
+            }
+
             function login() {
                 const type = document.getElementById('user-type').value;
                 const pass = document.getElementById('login-pass').value;
@@ -1101,13 +1108,13 @@ console.log("✅ Upstash Integration Loaded Successfully!");
                         </div>
                         <div style="display:flex; align-items:center; gap:8px;">
                             <span style="display:inline-block; width:20px; height:20px; background:var(--sahab-red); border-radius:5px; box-shadow:0 2px 5px rgba(231,76,60,0.3);"></span>
-                            <span>محجوزة</span>
+                            <span>مباعة</span>
                         </div>
                     </div>`;
 
                 // إحصائيات سريعة
                 let availableCount = b.units.filter(u => u.status === 'available').length;
-                let reservedCount = b.units.filter(u => u.status === 'reserved').length;
+                let soldCount = b.units.filter(u => u.status === 'sold').length;
                 let statsHtml = `
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px;">
                         <div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; padding:15px; border-radius:15px; text-align:center; box-shadow:0 4px 15px rgba(102,126,234,0.3);">
@@ -1120,8 +1127,8 @@ console.log("✅ Upstash Integration Loaded Successfully!");
                                 <div style="font-size:10px; opacity:0.9;">متاحة</div>
                             </div>
                             <div style="background:var(--sahab-red); color:white; padding:15px; border-radius:15px; text-align:center; box-shadow:0 4px 15px rgba(231,76,60,0.3);">
-                                <div style="font-size:24px; font-weight:900; margin-bottom:5px;">${reservedCount}</div>
-                                <div style="font-size:10px; opacity:0.9;">محجوزة</div>
+                                <div style="font-size:24px; font-weight:900; margin-bottom:5px;">${soldCount}</div>
+                                <div style="font-size:10px; opacity:0.9;">مباعة</div>
                             </div>
                         </div>
                     </div>`;
@@ -1356,6 +1363,12 @@ console.log("✅ Upstash Integration Loaded Successfully!");
             }
 
             function processInstallments(editIndex = null) {
+                // التحقق من كلمة سر Admin قبل المتابعة
+                const actionName = editIndex !== null ? "تعديل عقد عميل" : "تسجيل عقد عميل جديد";
+                if (!verifyAdminPassword(actionName)) {
+                    return; // إلغاء العملية
+                }
+                
                 let name = document.getElementById('custName').value;
                 let phone = document.getElementById('phone').value;
                 let total = parseFloat(document.getElementById('totalPrice').value) || 0;
@@ -1449,14 +1462,14 @@ console.log("✅ Upstash Integration Loaded Successfully!");
                 } else {
                     // ===== وضع الإضافة الجديدة =====
                     let installments = [];
-                    if (downPayment > 0 && downPaymentDate) installments.push({ d: downPaymentDate, a: downPayment, t: "مقدم تعاقد", status: 'paid' });
-                    if (deliveryPayment > 0 && deliveryPaymentDate) installments.push({ d: deliveryPaymentDate, a: deliveryPayment, t: "مقدم استلام", status: 'paid' });
+                    if (downPayment > 0 && downPaymentDate) installments.push({ d: downPaymentDate, a: downPayment, t: "مقدم تعاقد", status: 'pending' });
+                    if (deliveryPayment > 0 && deliveryPaymentDate) installments.push({ d: deliveryPaymentDate, a: deliveryPayment, t: "مقدم استلام", status: 'pending' });
                     
                     let extraTotal = extraPayments.reduce((s, p) => s + p.a, 0) + downPayment + deliveryPayment;
                     let remaining = total - extraTotal;
                     let instAmt = Math.round((remaining / qCount) * 100) / 100;
 
-                    extraPayments.forEach(p => installments.push({ ...p, status: 'paid' }));
+                    extraPayments.forEach(p => installments.push({ ...p, status: 'pending' }));
                     for(let i=0; i<qCount; i++) {
                         let d = new Date(qStart);
                         d.setMonth(d.getMonth() + (i * qFreq));
@@ -1628,6 +1641,31 @@ console.log("✅ Upstash Integration Loaded Successfully!");
                 let totalPending = pendingInstallments.reduce((sum, x) => sum + x.a, 0);
                 let totalPaid = c.installments.filter(x => x.status === 'paid').reduce((sum, x) => sum + x.a, 0);
                 
+                // أوامر تحصيل هذا العميل
+                let customerCollections = appData.collections.filter(col => col.customerIndex === index).reverse();
+                
+                let collectionsTableHtml = '';
+                if(customerCollections.length > 0) {
+                    collectionsTableHtml = `
+                    <div class="installment-card">
+                        <h3 style="color:var(--sahab-red);"><i class="fas fa-book" style="margin-left: 8px;"></i>دفتر أوامر التحصيل</h3>
+                        <table class="res-table">
+                            <thead><tr><th>المسلسل</th><th>رقم الأمر</th><th>المبلغ</th><th>التاريخ</th><th>الوقت</th></tr></thead>
+                            <tbody>
+                                ${customerCollections.map(col => `
+                                    <tr style="background:#e8f5e9;">
+                                        <td><strong>${col.serialNumber || '-'}</strong></td>
+                                        <td><strong style="color:#3498db;">${col.orderNumber || col.id}</strong></td>
+                                        <td style="color:#27ae60; font-weight:bold;">${col.amount.toLocaleString()}</td>
+                                        <td>${col.date}</td>
+                                        <td style="font-size:10px;">${col.time || '-'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>`;
+                }
+                
                 let html = `
                     <div class="installment-card">
                         <h3 style="color:var(--sahab-red);"><i class="fas fa-user-circle" style="margin-left: 8px;"></i>بيانات العميل</h3>
@@ -1654,18 +1692,20 @@ console.log("✅ Upstash Integration Loaded Successfully!");
                     </div>
                     
                     <div class="installment-card">
-                        <h3 style="color:var(--sahab-red);"><i class="fas fa-coins" style="margin-left: 8px;"></i>تحصيل مبلغ مرن</h3>
+                        <h3 style="color:var(--sahab-red);"><i class="fas fa-coins" style="margin-left: 8px;"></i>تسجيل أمر تحصيل جديد</h3>
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                             <div><span class="field-label">المبلغ المدفوع</span><input type="number" id="collectAmt" class="installment-input" placeholder="أدخل المبلغ..." min="0" step="0.01"></div>
                             <div><span class="field-label">تاريخ التحصيل</span><input type="date" id="collectDate" class="installment-input" value="${new Date().toISOString().split('T')[0]}"></div>
                         </div>
-                        <button onclick="processFlexibleCollection(${index})" style="width:100%; padding:12px; background:var(--sahab-green); color:white; border:none; border-radius:10px; font-weight:900; cursor:pointer; margin-top:10px; font-size:14px;"><i class="fas fa-check-circle" style="margin-left: 8px;"></i>تأكيد التحصيل</button>
+                        <button onclick="processFlexibleCollection(${index})" style="width:100%; padding:12px; background:var(--sahab-green); color:white; border:none; border-radius:10px; font-weight:900; cursor:pointer; margin-top:10px; font-size:14px;"><i class="fas fa-check-circle" style="margin-left: 8px;"></i>تأكيد التحصيل وإصدار أمر</button>
                     </div>
                     
+                    ${collectionsTableHtml}
+                    
                     <div class="installment-card">
-                        <h3 style="color:var(--sahab-red);"><i class="fas fa-list" style="margin-left: 8px;"></i>الأقساط المستحقة والمسددة</h3>
+                        <h3 style="color:var(--sahab-red);"><i class="fas fa-list" style="margin-left: 8px;"></i>جدول الأقساط التفصيلي</h3>
                         <table class="res-table">
-                            <thead><tr><th>م</th><th>التاريخ</th><th>المبلغ</th><th>البيان</th><th>الحالة</th><th>إجراء</th></tr></thead>
+                            <thead><tr><th>م</th><th>التاريخ</th><th>المبلغ</th><th>البيان</th><th>الحالة</th><th>رقم الأمر</th></tr></thead>
                             <tbody>
                                 ${c.installments.map((x, i) => `
                                     <tr style="${x.status === 'paid' ? 'background:#e8f5e9; opacity:0.8;' : 'background:#fff3f3;'}">
@@ -1674,9 +1714,7 @@ console.log("✅ Upstash Integration Loaded Successfully!");
                                         <td style="font-weight:bold; color:${x.status === 'paid' ? '#27ae60' : '#e74c3c'}; font-size:12px;">${x.a.toLocaleString()}</td>
                                         <td style="font-size:11px;">${x.t}</td>
                                         <td style="color:${x.status === 'paid' ? '#27ae60' : '#e74c3c'}; font-weight: bold;">${x.status === 'paid' ? '✅ مسدد' : '⏳ معلق'}</td>
-                                        <td>
-                                            <button onclick="editInstallment(${appData.customers.indexOf(c)}, ${i})" style="background:#ff9800; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:10px;"><i class="fas fa-edit"></i> تعديل</button>
-                                        </td>
+                                        <td style="font-size:10px; color:#3498db;">${x.collectionOrderNumber || '-'}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -1692,13 +1730,21 @@ console.log("✅ Upstash Integration Loaded Successfully!");
                 if(!amount || amount <= 0) return alert("❌ يرجى إدخال مبلغ صحيح");
                 if(!collectDate) return alert("❌ يرجى اختيار التاريخ");
 
+                // التحقق من كلمة سر Admin قبل التحصيل
                 let c = appData.customers[custIndex];
-                let remainingToPay = amount;
-                let paidCount = 0;
-
-                // تسجيل التحصيل في السجل
-                let collectionRecord = {
+                if (!verifyAdminPassword(`تسجيل تحصيل بمبلغ ${amount.toLocaleString()} من العميل: ${c.name}`)) {
+                    return; // إلغاء العملية
+                }
+                
+                // إنشاء رقم مسلسل للأمر (يبدأ من 1 ويزيد تلقائياً)
+                let serialNumber = (appData.collections.length + 1);
+                let orderNumber = `ORD-${new Date().getFullYear()}-${String(serialNumber).padStart(5, '0')}`;
+                
+                // إنشاء أمر تحصيل جديد
+                let collectionOrder = {
                     id: Date.now(),
+                    serialNumber: serialNumber,
+                    orderNumber: orderNumber,
                     customerIndex: custIndex,
                     customerName: c.name,
                     building: c.building,
@@ -1706,45 +1752,63 @@ console.log("✅ Upstash Integration Loaded Successfully!");
                     unit: c.unit,
                     amount: amount,
                     date: collectDate,
+                    time: new Date().toLocaleTimeString('ar-EG'),
                     status: 'completed',
                     createdAt: new Date().toISOString()
                 };
                 
-                appData.collections.push(collectionRecord);
+                // إضافة الأمر إلى دفتر أوامر التحصيل
+                appData.collections.push(collectionOrder);
 
-                // معالجة التحصيل: خصم من الأقساط المعلقة دون إضافة قسط جديد
-                for(let i=0; i<c.installments.length; i++) {
-                    if(remainingToPay <= 0) break;
-                    if(c.installments[i].status === 'pending') {
-                        if(remainingToPay >= c.installments[i].a) {
-                            // تسديد القسط كاملاً
-                            remainingToPay -= c.installments[i].a;
-                            c.installments[i].status = 'paid';
-                            c.installments[i].paidDate = collectDate;
-                            paidCount++;
-                        } else {
-                            // سداد جزئي: ينقص من قيمة القسط الحالي مباشرة بدون إضافة قسط جديد
-                            c.installments[i].a = Math.round((c.installments[i].a - remainingToPay) * 100) / 100;
-                            c.installments[i].t = c.installments[i].t.replace(' (متبقي)', '') + ' (متبقي)';
-                            remainingToPay = 0;
-                        }
+                // التوزيع التلقائي على الأقساط حسب ترتيب التاريخ
+                let remainingAmount = amount;
+                let paidCount = 0;
+                
+                // ترتيب الأقساط المعلقة حسب التاريخ
+                let pendingInstallments = c.installments
+                    .map((inst, idx) => ({...inst, originalIndex: idx}))
+                    .filter(inst => inst.status === 'pending')
+                    .sort((a, b) => new Date(a.d) - new Date(b.d));
+
+                // التوزيع التلقائي
+                for(let inst of pendingInstallments) {
+                    if(remainingAmount <= 0) break;
+                    
+                    let idx = inst.originalIndex;
+                    
+                    if(remainingAmount >= c.installments[idx].a) {
+                        // تسديد القسط كاملاً
+                        remainingAmount -= c.installments[idx].a;
+                        c.installments[idx].status = 'paid';
+                        c.installments[idx].paidDate = collectDate;
+                        c.installments[idx].collectionOrderNumber = orderNumber;
+                        paidCount++;
+                    } else {
+                        // سداد جزئي: تقليل قيمة القسط
+                        c.installments[idx].a = Math.round((c.installments[idx].a - remainingAmount) * 100) / 100;
+                        c.installments[idx].t = c.installments[idx].t.replace(' (متبقي)', '') + ' (متبقي)';
+                        c.installments[idx].collectionOrderNumber = orderNumber;
+                        remainingAmount = 0;
                     }
                 }
                 
                 // حفظ البيانات
                 saveData();
                 
-                // حساب إجمالي مسدد ومتبقي لعرضه في الرسالة
+                // حساب الإحصائيات
                 let totalPaid = c.installments.filter(x => x.status === 'paid').reduce((s,x)=>s+x.a, 0);
                 let totalPending = c.installments.filter(x => x.status === 'pending').reduce((s,x)=>s+x.a, 0);
 
-                let message = `✅ تم تسجيل التحصيل بنجاح!\n\n`;
-                message += `📊 التفاصيل:\n`;
-                message += `• المبلغ المدفوع: ${amount.toLocaleString()}\n`;
+                let message = `✅ تم تسجيل أمر التحصيل بنجاح!\n\n`;
+                message += `📋 رقم الأمر: ${orderNumber}\n`;
+                message += `🔢 المسلسل: ${serialNumber}\n`;
+                message += `💰 المبلغ المدفوع: ${amount.toLocaleString()}\n`;
+                message += `📅 التاريخ: ${collectDate}\n`;
+                message += `⏰ الوقت: ${collectionOrder.time}\n\n`;
+                message += `📊 النتيجة:\n`;
                 message += `• عدد الأقساط المسددة كاملاً: ${paidCount}\n`;
                 message += `• إجمالي المسدد: ${totalPaid.toLocaleString()}\n`;
                 message += `• إجمالي المتبقي: ${totalPending.toLocaleString()}\n`;
-                message += `• التاريخ: ${collectDate}\n`;
                 
                 alert(message);
                 viewCustomerDetail(custIndex);
@@ -1974,11 +2038,17 @@ console.log("✅ Upstash Integration Loaded Successfully!");
                 if(type === 'income') {
                     document.getElementById('current-command-text').innerText = "تفاصيل المحصلات حسب العمارة";
                     
-                    // حساب المحصل من كل عمارة
+                    // حساب المحصل من كل عمارة (حسب اسم العمارة فقط بدون المنطقة لتجنب التكرار)
                     let buildingIncome = {};
                     appData.customers.forEach(c => {
-                        const key = `${c.building} (${c.region})`;
-                        if(!buildingIncome[key]) buildingIncome[key] = { income: 0, customers: [] };
+                        const key = c.building; // استخدام اسم العمارة فقط
+                        if(!buildingIncome[key]) {
+                            buildingIncome[key] = { 
+                                income: 0, 
+                                customers: [],
+                                region: c.region // حفظ المنطقة للعرض فقط
+                            };
+                        }
                         let custIncome = c.installments.filter(x => x.status === 'paid').reduce((sum, x) => sum + x.a, 0);
                         buildingIncome[key].income += custIncome;
                         buildingIncome[key].customers.push(c);
@@ -1993,11 +2063,12 @@ console.log("✅ Upstash Integration Loaded Successfully!");
                         </div>
                         <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap:10px;">
                             ${Object.entries(buildingIncome).map(([building, data]) => {
-                                let percentage = (data.income / totalIncome * 100).toFixed(1);
+                                // إصلاح NaN% - إذا الإجمالي صفر نعرض 0%
+                                let percentage = totalIncome > 0 ? (data.income / totalIncome * 100).toFixed(1) : '0';
                                 return `
                                     <div class="building-icon-card" style="border-bottom: 5px solid var(--sahab-green); cursor:pointer; transition:0.3s;" onclick="renderBuildingCollectionDetails('${building}')" ondblclick="renderBuildingCollectionForm('${building}')">
                                         <i class="fas fa-building" style="font-size: 40px; color: var(--sahab-green); margin-bottom: 10px;"></i>
-                                        <strong style="font-size:14px; color:var(--sahab-red);">${building}</strong><br>
+                                        <strong style="font-size:14px; color:var(--sahab-red);">${building} (${data.region})</strong><br>
                                         <div style="margin-top:8px; font-size:12px; background:#e8f5e9; padding:8px; border-radius:5px; width:100%;">
                                             <strong style="color:var(--sahab-green); font-size:14px;">${data.income.toLocaleString()}</strong><br>
                                             <small style="color:#666;">${percentage}% من الإجمالي</small>
@@ -2015,8 +2086,8 @@ console.log("✅ Upstash Integration Loaded Successfully!");
             function renderBuildingCollectionDetails(building) {
                 document.getElementById('current-command-text').innerText = `تفاصيل المحصول: ${building}`;
                 
-                // جلب عملاء هذه العمارة والمحصول منهم
-                let buildingCustomers = appData.customers.filter(c => `${c.building} (${c.region})` === building);
+                // جلب عملاء هذه العمارة والمحصول منهم (حسب اسم العمارة فقط)
+                let buildingCustomers = appData.customers.filter(c => c.building === building);
                 
                 let html = `
                     <div class="installment-card">
@@ -2145,6 +2216,11 @@ console.log("✅ Upstash Integration Loaded Successfully!");
                     return alert('❌ يرجى إدخال بيانات صحيحة');
                 }
                 
+                // التحقق من كلمة سر Admin قبل حفظ التعديل
+                if (!verifyAdminPassword(`تعديل قسط للعميل: ${c.name}`)) {
+                    return; // إلغاء العملية
+                }
+                
                 // حفظ البيانات القديمة
                 const oldStatus = c.installments[instIndex].status;
                 const oldAmount = c.installments[instIndex].a;
@@ -2168,6 +2244,11 @@ console.log("✅ Upstash Integration Loaded Successfully!");
                 
                 if(!confirm(`⚠️ هل تأكد من حذف هذا القسط؟\n\nالمبلغ: ${inst.a.toLocaleString()}\nالتاريخ: ${inst.d}\nالحالة: ${inst.status === 'paid' ? '✅ مسدد' : '⏳ معلق'}`)) {
                     return;
+                }
+                
+                // التحقق من كلمة سر Admin قبل الحذف
+                if (!verifyAdminPassword(`حذف قسط للعميل: ${c.name}`)) {
+                    return; // إلغاء العملية
                 }
                 
                 c.installments.splice(instIndex, 1);
@@ -2271,23 +2352,24 @@ console.log("✅ Upstash Integration Loaded Successfully!");
 
                     <!-- سجل عمليات التحصيل المسجلة -->
                     <div class="installment-card" style="margin-top:15px;">
-                        <h3 style="color:var(--sahab-red); margin-top:0;"><i class="fas fa-history" style="margin-left:8px;"></i>سجل عمليات التحصيل (${appData.collections.length})</h3>
+                        <h3 style="color:var(--sahab-red); margin-top:0;"><i class="fas fa-book" style="margin-left:8px;"></i>دفتر أوامر التحصيل (${appData.collections.length})</h3>
                         ${appData.collections.length === 0 ?
-                            '<div style="text-align:center; color:#999; padding:20px;">لا توجد عمليات تحصيل مسجلة بعد</div>' :
+                            '<div style="text-align:center; color:#999; padding:20px;">لا توجد أوامر تحصيل مسجلة بعد</div>' :
                             `<div style="overflow-x:auto;"><table class="res-table">
                                 <thead>
-                                    <tr><th>م</th><th>العميل</th><th>العمارة / الوحدة</th><th>المبلغ</th><th>التاريخ</th><th>إجراء</th></tr>
+                                    <tr><th>المسلسل</th><th>رقم الأمر</th><th>العميل</th><th>العمارة / الوحدة</th><th>المبلغ</th><th>التاريخ</th><th>الوقت</th><th>إجراء</th></tr>
                                 </thead>
                                 <tbody>
                                     ${[...appData.collections].reverse().map((col, idx) => `
                                         <tr>
-                                            <td><strong>${appData.collections.length - idx}</strong></td>
+                                            <td><strong>${col.serialNumber || (appData.collections.length - idx)}</strong></td>
+                                            <td style="color:#3498db; font-weight:bold;">${col.orderNumber || col.id}</td>
                                             <td style="font-weight:bold;">${col.customerName}</td>
                                             <td>${col.building} / ${col.unit}</td>
                                             <td style="font-weight:bold; color:var(--sahab-green);">${col.amount.toLocaleString()}</td>
                                             <td>${col.date}</td>
-                                            <td style="display:flex; gap:5px;">
-                                                <button onclick="editCollection(${col.id})" style="background:#ff9800; color:white; border:none; padding:5px 8px; border-radius:5px; cursor:pointer; font-size:11px;"><i class="fas fa-edit"></i> تعديل</button>
+                                            <td style="font-size:10px;">${col.time || '-'}</td>
+                                            <td>
                                                 <button onclick="deleteCollection(${col.id})" style="background:#e74c3c; color:white; border:none; padding:5px 8px; border-radius:5px; cursor:pointer; font-size:11px;"><i class="fas fa-trash"></i> حذف</button>
                                             </td>
                                         </tr>
@@ -2421,13 +2503,32 @@ console.log("✅ Upstash Integration Loaded Successfully!");
                 let collection = appData.collections.find(c => c.id === collectionId);
                 if(!collection) return alert('❌ لم يتم العثور على التحصيل');
                 
-                if(!confirm(`⚠️ هل تأكد من حذف هذا التحصيل؟\n\nالعميل: ${collection.customerName}\nالمبلغ: ${collection.amount.toLocaleString()}\nالتاريخ: ${collection.date}`)) {
+                if(!confirm(`⚠️ هل تأكد من حذف أمر التحصيل؟\n\nرقم الأمر: ${collection.orderNumber || collectionId}\nالعميل: ${collection.customerName}\nالمبلغ: ${collection.amount.toLocaleString()}\nالتاريخ: ${collection.date}\n\n⚠️ سيتم إعادة الأقساط المسددة بهذا الأمر إلى حالة "معلق"`)) {
                     return;
                 }
                 
+                // التحقق من كلمة سر Admin قبل الحذف
+                if (!verifyAdminPassword(`حذف أمر تحصيل رقم: ${collection.orderNumber || collectionId}`)) {
+                    return; // إلغاء العملية
+                }
+                
+                // إعادة الأقساط المرتبطة بهذا الأمر إلى حالة معلق
+                let customer = appData.customers[collection.customerIndex];
+                if(customer) {
+                    customer.installments.forEach(inst => {
+                        if(inst.collectionOrderNumber === collection.orderNumber || 
+                           (inst.paidDate === collection.date && inst.status === 'paid' && !inst.collectionOrderNumber)) {
+                            inst.status = 'pending';
+                            delete inst.paidDate;
+                            delete inst.collectionOrderNumber;
+                        }
+                    });
+                }
+                
+                // حذف التحصيل من السجل
                 appData.collections = appData.collections.filter(c => c.id !== collectionId);
                 saveData();
-                alert('✅ تم حذف التحصيل بنجاح');
+                alert('✅ تم حذف أمر التحصيل بنجاح وإعادة الأقساط إلى حالة "معلق"');
                 renderCollectionsManager();
             }
 
@@ -2626,16 +2727,25 @@ console.log("✅ Upstash Integration Loaded Successfully!");
             }
 
             function deleteCustomer(index) {
-                if(confirm("هل أنت متأكد؟")) {
-                    const c = appData.customers[index];
-                    appData.regions.forEach(r => r.buildings.forEach(b => {
-                        let u = b.units.find(u => u.code === c.unit && b.name === c.building);
-                        if(u) u.status = 'available';
-                    }));
-                    appData.customers.splice(index, 1);
-                    saveData();
-                    renderCustomerRegistry();
+                const c = appData.customers[index];
+                
+                if(!confirm(`⚠️ هل أنت متأكد من حذف العميل؟\n\nالاسم: ${c.name}\nالهاتف: ${c.phone}\nالوحدة: ${c.building} / ${c.unit}\n\n⚠️ سيتم حذف جميع بيانات العميل وأقساطه`)) {
+                    return;
                 }
+                
+                // التحقق من كلمة سر Admin قبل الحذف
+                if (!verifyAdminPassword(`حذف العميل: ${c.name}`)) {
+                    return; // إلغاء العملية
+                }
+                
+                appData.regions.forEach(r => r.buildings.forEach(b => {
+                    let u = b.units.find(u => u.code === c.unit && b.name === c.building);
+                    if(u) u.status = 'available';
+                }));
+                appData.customers.splice(index, 1);
+                saveData();
+                alert('✅ تم حذف العميل بنجاح وإعادة الوحدة إلى "متاحة"');
+                renderCustomerRegistry();
             }
 
             function renderInstallmentReport(type) {
