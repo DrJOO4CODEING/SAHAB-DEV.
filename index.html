@@ -2,7 +2,7 @@
     <html lang="ar" dir="rtl">
     <head>
         <meta charset="UTF-8">
-        <title>شركة سحاب للتطوير العقارى</title>
+        <title>شركة سحاب للتطوير العقارى - النسخة المحسنة v2</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -239,6 +239,7 @@
         <script>
             let currentUser = null; // لا يوجد مستخدم مسجل عند بدء التطبيق
             let passwords = JSON.parse(localStorage.getItem('sahab_passwords')) || { admin: '123', viewer: '456' };
+            let cloudEditMode = false; // للتحكم بحالة التعديل على إعدادات السحابة
 
             let upstashConfig = JSON.parse(localStorage.getItem('sahab_upstash_config')) || {
                 enabled: true,
@@ -1661,27 +1662,28 @@
                 if (currentUser === 'admin') {
                     html += '<div class="installment-card"><h3 style="color:var(--sahab-red);">🔧 إعدادات السحابة المتقدمة</h3>' +
                         '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px;margin-bottom:15px;font-size:12px;color:#856404;">' +
-                        '<strong>⚠️ تحذير:</strong> لا تعدّل هذه الإعدادات إلا إذا كنت متأكداً!' +
+                        '<strong>🔒 محمية:</strong> هذه الإعدادات مقفلة. اضغط على "تفعيل التعديل" لتغييرها' +
                         '</div>' +
                         '<div style="display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:15px;">' +
-                        '<div><span class="field-label">URL السحابة (Upstash)</span><input type="text" id="cloud-url" class="installment-input" value="' + upstashConfig.url + '" placeholder="https://..."></div>' +
-                        '<div><span class="field-label">رمز الدخول (Token)</span><input type="password" id="cloud-token" class="installment-input" value="' + upstashConfig.token + '" placeholder="أدخل الـ Token"></div>' +
-                        '<div><span class="field-label">مفتاح البيانات (Key)</span><input type="text" id="cloud-key" class="installment-input" value="' + upstashConfig.key + '" placeholder="sahab_data"></div>' +
+                        '<div><span class="field-label">URL السحابة (Upstash)</span><input type="text" id="cloud-url" class="installment-input" value="' + upstashConfig.url + '" placeholder="https://..." disabled></div>' +
+                        '<div><span class="field-label">رمز الدخول (Token)</span><input type="password" id="cloud-token" class="installment-input" value="' + upstashConfig.token + '" placeholder="أدخل الـ Token" disabled></div>' +
+                        '<div><span class="field-label">مفتاح البيانات (Key)</span><input type="text" id="cloud-key" class="installment-input" value="' + upstashConfig.key + '" placeholder="sahab_data" disabled></div>' +
                         '</div>' +
                         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px;">' +
                         '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">' +
-                        '<input type="checkbox" id="cloud-enabled" ' + (upstashConfig.enabled ? 'checked' : '') + ' style="width:18px;height:18px;cursor:pointer;">' +
+                        '<input type="checkbox" id="cloud-enabled" ' + (upstashConfig.enabled ? 'checked' : '') + ' style="width:18px;height:18px;cursor:pointer;" disabled>' +
                         '<span style="font-weight:bold;">تفعيل المزامنة التلقائية</span>' +
                         '</label>' +
                         '</div>' +
-                        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
-                        '<button onclick="testCloudConnection()" style="padding:12px;background:#3498db;color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;">' +
+                        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px;">' +
+                        '<button onclick="enableCloudEdit()" style="padding:12px;background:#ff9800;color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;">🔓 تفعيل التعديل</button>' +
+                        '<button id="test-cloud-btn" onclick="testCloudConnection()" style="padding:12px;background:#3498db;color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;">' +
                         '🔗 اختبار الاتصال' +
                         '</button>' +
-                        '<button onclick="saveCloudSettings()" style="padding:12px;background:var(--sahab-green);color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;">' +
+                        '</div>' +
+                        '<button id="save-cloud-btn" onclick="saveCloudSettings()" style="width:100%;padding:12px;background:var(--sahab-green);color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;display:none;">' +
                         '💾 حفظ الإعدادات' +
                         '</button>' +
-                        '</div>' +
                         '</div>';
                 }
                 
@@ -1699,6 +1701,21 @@
                 }
                 
                 document.getElementById('main-content').innerHTML = html;
+            }
+
+            function enableCloudEdit() {
+                if (!verifyAdminPassword('تعديل إعدادات السحابة')) return;
+                
+                cloudEditMode = true;
+                document.getElementById('cloud-url').disabled = false;
+                document.getElementById('cloud-token').disabled = false;
+                document.getElementById('cloud-key').disabled = false;
+                document.getElementById('cloud-enabled').disabled = false;
+                
+                document.getElementById('test-cloud-btn').style.display = 'none';
+                document.getElementById('save-cloud-btn').style.display = 'block';
+                
+                alert('✅ تم فتح وضع التعديل\n\nيمكنك الآن تعديل الحقول والنقر على "حفظ الإعدادات"');
             }
 
             function testCloudConnection() {
@@ -1732,8 +1749,6 @@
             }
 
             function saveCloudSettings() {
-                if (!verifyAdminPassword('حفظ إعدادات السحابة')) return;
-                
                 var url = document.getElementById('cloud-url').value;
                 var token = document.getElementById('cloud-token').value;
                 var key = document.getElementById('cloud-key').value;
@@ -1752,6 +1767,7 @@
                 };
                 
                 localStorage.setItem('sahab_upstash_config', JSON.stringify(upstashConfig));
+                cloudEditMode = false;
                 alert('✅ تم حفظ إعدادات السحابة بنجاح!\n\n' + 
                       (enabled ? '🟢 المزامنة التلقائية: مفعلة' : '🔴 المزامنة التلقائية: معطلة'));
                 renderSettings();
